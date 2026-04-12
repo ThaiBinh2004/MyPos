@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { getProducts, createProduct } from "@/services/sales.service";
+import { getProducts, createProduct, getCategories } from "@/services/sales.service";
 import type { ProductFilters, ProductStatus } from "@/types";
 import {
   Card,
@@ -38,9 +38,10 @@ const schema = z.object({
   sku: z.string().min(1, "Bắt buộc"),
   productName: z.string().min(1, "Bắt buộc"),
   price: z.coerce.number().min(0, "Giá không hợp lệ"),
-  category: z.string().min(1, "Bắt buộc"),
+  categoryId: z.string().min(1, "Bắt buộc"),
   sizeInfo: z.string().optional(),
   color: z.string().optional(),
+  imageUrl: z.string().url("URL không hợp lệ").optional().or(z.literal("")),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -54,6 +55,11 @@ export default function ProductsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["products", filters],
     queryFn: () => getProducts(filters),
+  });
+
+  const { data: categories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: getCategories,
   });
 
   const createMutation = useMutation({
@@ -75,6 +81,16 @@ export default function ProductsPage() {
   function handleSearch() {
     setFilters((f) => ({ ...f, search: search || undefined, page: 1 }));
   }
+
+  const categoryOptions = [
+    { value: "", label: "Tất cả danh mục" },
+    ...(categories ?? []).map((c) => ({ value: c.categoryId, label: c.categoryName })),
+  ];
+
+  const categorySelectOptions = (categories ?? []).map((c) => ({
+    value: c.categoryId,
+    label: c.categoryName,
+  }));
 
   const products = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -99,6 +115,13 @@ export default function ProductsPage() {
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             />
             <Select
+              options={categoryOptions}
+              value={filters.categoryId ?? ""}
+              onChange={(v) =>
+                setFilters((f) => ({ ...f, categoryId: v || undefined, page: 1 }))
+              }
+            />
+            <Select
               options={STATUS_OPTIONS}
               value={filters.status ?? ""}
               onChange={(v) =>
@@ -119,6 +142,7 @@ export default function ProductsPage() {
           <Table>
             <TableHead>
               <TableRow>
+                <TableTh>Ảnh</TableTh>
                 <TableTh>SKU</TableTh>
                 <TableTh>Tên sản phẩm</TableTh>
                 <TableTh>Danh mục</TableTh>
@@ -131,22 +155,35 @@ export default function ProductsPage() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableTd colSpan={7} className="text-center py-8 text-gray-500">
+                  <TableTd colSpan={8} className="text-center py-8 text-gray-500">
                     Đang tải...
                   </TableTd>
                 </TableRow>
               ) : products.length === 0 ? (
                 <TableRow>
-                  <TableTd colSpan={7} className="text-center py-8 text-gray-500">
+                  <TableTd colSpan={8} className="text-center py-8 text-gray-500">
                     Không có sản phẩm
                   </TableTd>
                 </TableRow>
               ) : (
                 products.map((product) => (
                   <TableRow key={product.productId}>
+                    <TableTd>
+                      {product.imageUrl ? (
+                        <img
+                          src={product.imageUrl}
+                          alt={product.productName}
+                          className="w-10 h-10 object-cover rounded"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-400">
+                          N/A
+                        </div>
+                      )}
+                    </TableTd>
                     <TableTd className="font-mono text-sm">{product.sku}</TableTd>
                     <TableTd className="font-medium">{product.productName}</TableTd>
-                    <TableTd>{product.category}</TableTd>
+                    <TableTd>{product.categoryName}</TableTd>
                     <TableTd>{product.sizeInfo ?? "—"}</TableTd>
                     <TableTd>{product.color ?? "—"}</TableTd>
                     <TableTd>{formatCurrency(product.price)}</TableTd>
@@ -170,10 +207,21 @@ export default function ProductsPage() {
         onClose={() => { setShowModal(false); reset(); }}
         title="Thêm sản phẩm mới"
       >
-        <form onSubmit={handleSubmit((d) => createMutation.mutate(d))} className="space-y-4">
+        <form onSubmit={handleSubmit((d) => createMutation.mutate({ ...d, imageUrl: d.imageUrl || undefined }))} className="space-y-4">
           <Input label="SKU *" {...register("sku")} error={errors.sku?.message} />
           <Input label="Tên sản phẩm *" {...register("productName")} error={errors.productName?.message} />
-          <Input label="Danh mục *" {...register("category")} error={errors.category?.message} />
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">Danh mục *</label>
+            <Select
+              options={categorySelectOptions}
+              value=""
+              onChange={() => {}}
+              {...register("categoryId")}
+            />
+            {errors.categoryId && (
+              <p className="text-xs text-red-500">{errors.categoryId.message}</p>
+            )}
+          </div>
           <Input
             label="Giá (VNĐ) *"
             type="number"
@@ -182,6 +230,12 @@ export default function ProductsPage() {
           />
           <Input label="Size" {...register("sizeInfo")} error={errors.sizeInfo?.message} />
           <Input label="Màu sắc" {...register("color")} error={errors.color?.message} />
+          <Input
+            label="URL hình ảnh"
+            placeholder="https://..."
+            {...register("imageUrl")}
+            error={errors.imageUrl?.message}
+          />
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => { setShowModal(false); reset(); }}>
               Hủy

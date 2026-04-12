@@ -5,6 +5,7 @@ import type {
   CreateOrderPayload,
   Customer,
   CreateCustomerPayload,
+  Category,
   Product,
   ProductFilters,
   CreateProductPayload,
@@ -56,6 +57,11 @@ export async function getCustomer(id: string): Promise<Customer> {
 
 export async function createCustomer(payload: CreateCustomerPayload): Promise<Customer> {
   const { data } = await api.post<Customer>('/sales/customers', payload);
+  return data;
+}
+
+export async function getCategories(): Promise<Category[]> {
+  const { data } = await api.get<Category[]>('/sales/categories');
   return data;
 }
 

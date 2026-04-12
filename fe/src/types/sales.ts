@@ -1,4 +1,10 @@
 export type OrderStatus = 'pending' | 'confirmed' | 'shipping' | 'completed' | 'cancelled';
+
+export interface Category {
+  categoryId: string;
+  categoryName: string;
+  description?: string;
+}
 export type OrderType = 'online' | 'offline';
 export type PaymentMethod = 'cash' | 'transfer' | 'card';
 export type ProductStatus = 'active' | 'inactive';
@@ -22,7 +28,9 @@ export interface Product {
   price: number;
   sizeInfo?: string;
   color?: string;
-  category: string;
+  imageUrl?: string;
+  categoryId: string;
+  categoryName: string;
   status: ProductStatus;
 }
 
@@ -119,7 +127,7 @@ export interface OrderFilters {
 
 export interface ProductFilters {
   search?: string;
-  category?: string;
+  categoryId?: string;
   status?: ProductStatus;
   page?: number;
   pageSize?: number;
@@ -152,7 +160,8 @@ export interface CreateProductPayload {
   price: number;
   sizeInfo?: string;
   color?: string;
-  category: string;
+  imageUrl?: string;
+  categoryId: string;
 }
 
 export interface CreateSupplierPayload {
