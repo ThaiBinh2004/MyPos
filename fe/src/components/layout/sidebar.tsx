@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Users, FileText, UserPlus, Clock, DollarSign, Package,
-  ShoppingCart, BarChart2, Boxes, Truck, ClipboardList, Home,
+  ShoppingCart, BarChart2, Boxes, Truck, ClipboardList, Home, Tag, Monitor,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +14,7 @@ const hrNav = [
   { label: 'Hợp đồng', href: '/hr/contracts', icon: FileText },
   { label: 'Tuyển dụng', href: '/hr/recruitment', icon: UserPlus },
   { label: 'Chấm công', href: '/hr/attendance', icon: Clock },
+  { label: 'Kiosk', href: '/hr/attendance/kiosk', icon: Monitor },
   { label: 'Lương', href: '/hr/payroll', icon: DollarSign },
   { label: 'Tài sản', href: '/hr/assets', icon: Package },
 ];
@@ -21,6 +22,7 @@ const hrNav = [
 const salesNav = [
   { label: 'Đơn hàng', href: '/sales/orders', icon: ShoppingCart },
   { label: 'Sản phẩm', href: '/sales/products', icon: Boxes },
+  { label: 'Danh mục', href: '/sales/categories', icon: Tag },
   { label: 'Kho hàng', href: '/sales/inventory', icon: ClipboardList },
   { label: 'Nhà cung cấp', href: '/sales/suppliers', icon: Truck },
   { label: 'Báo cáo', href: '/sales/reports', icon: BarChart2 },

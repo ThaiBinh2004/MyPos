@@ -65,6 +65,20 @@ export async function getCategories(): Promise<Category[]> {
   return data;
 }
 
+export async function createCategory(payload: { categoryName: string; description?: string }): Promise<Category> {
+  const { data } = await api.post<Category>('/sales/categories', payload);
+  return data;
+}
+
+export async function updateCategory(id: string, payload: { categoryName: string; description?: string }): Promise<Category> {
+  const { data } = await api.put<Category>(`/sales/categories/${id}`, payload);
+  return data;
+}
+
+export async function deleteCategory(id: string): Promise<void> {
+  await api.delete(`/sales/categories/${id}`);
+}
+
 export async function getProducts(
   filters?: ProductFilters
 ): Promise<PaginatedResponse<Product>> {

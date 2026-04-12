@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Download } from 'lucide-react';
-import { getPayrolls, confirmPayroll, markAsPaid, exportPayroll } from '@/services/payroll.service';
+import { getPayrolls, confirmPayroll, markAsPaid, exportPayroll, getPaySlip } from '@/services/payroll.service';
 import {
   Button, Select, Badge, Table, TableHead, TableBody,
   TableRow, TableTh, TableTd, PageSpinner,
@@ -100,6 +100,7 @@ export default function PayrollPage() {
               <TableTh>Khấu trừ</TableTh>
               <TableTh>Thực lĩnh</TableTh>
               <TableTh>Trạng thái</TableTh>
+              <TableTh>Phiếu lương</TableTh>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -119,6 +120,18 @@ export default function PayrollPage() {
                   <TableTd>{formatCurrency(p.deduction)}</TableTd>
                   <TableTd className="font-semibold">{formatCurrency(p.netSalary)}</TableTd>
                   <TableTd><Badge variant={status.variant}>{status.label}</Badge></TableTd>
+                  <TableTd>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        const slip = await getPaySlip(p.payrollId);
+                        console.log('Payslip:', slip);
+                      }}
+                    >
+                      Xem
+                    </Button>
+                  </TableTd>
                 </TableRow>
               );
             })}
