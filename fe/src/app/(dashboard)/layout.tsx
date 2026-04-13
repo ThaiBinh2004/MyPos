@@ -11,14 +11,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  // useEffect(() => {
-  //   if (!loading && !user) {
-  //     router.push('/login');
-  //   }
-  // }, [user, loading, router]);
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
 
-  // if (loading) return <PageSpinner />;
-  // if (!user) return null;
+  if (loading) return <PageSpinner />;
+  if (!user) return null;
 
   return (
     <div className="flex h-screen bg-gray-50">
