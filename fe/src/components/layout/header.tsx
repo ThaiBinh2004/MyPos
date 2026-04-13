@@ -22,10 +22,10 @@ export function Header() {
       <div />
       {user && (
         <div className="flex items-center gap-3">
-          <Avatar name={user.fullName} size="sm" />
+          <Avatar name={user.fullName ?? user.role} size="sm" />
           <div className="text-sm">
-            <p className="font-medium text-gray-900">{user.fullName}</p>
-            <p className="text-xs text-gray-500">{user.branchName}</p>
+            <p className="font-medium text-gray-900">{user.fullName ?? user.role}</p>
+            <p className="text-xs text-gray-500">{user.branchName ?? ''}</p>
           </div>
           <button
             onClick={handleLogout}

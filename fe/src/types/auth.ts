@@ -1,11 +1,11 @@
 import type { Role } from './common';
 
 export interface AuthUser {
-  employeeId: string;
-  fullName: string;
-  role: Role;
-  branchId: string;
-  branchName: string;
+  employeeId: string | null;
+  fullName: string | null;
+  role: Role | string;
+  branchId: string | null;
+  branchName: string | null;
 }
 
 export interface LoginCredentials {
