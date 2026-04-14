@@ -92,7 +92,7 @@ export default function ProductsPage() {
     label: c.categoryName,
   }));
 
-  const products = data?.items ?? [];
+  const products = data?.data ?? [];
   const total = data?.total ?? 0;
 
   return (
@@ -117,17 +117,17 @@ export default function ProductsPage() {
             <Select
               options={categoryOptions}
               value={filters.categoryId ?? ""}
-              onChange={(v) =>
-                setFilters((f) => ({ ...f, categoryId: v || undefined, page: 1 }))
+              onChange={(e) =>
+                setFilters((f) => ({ ...f, categoryId: e.target.value || undefined, page: 1 }))
               }
             />
             <Select
               options={STATUS_OPTIONS}
               value={filters.status ?? ""}
-              onChange={(v) =>
+              onChange={(e) =>
                 setFilters((f) => ({
                   ...f,
-                  status: (v as ProductStatus) || undefined,
+                  status: (e.target.value as ProductStatus) || undefined,
                   page: 1,
                 }))
               }

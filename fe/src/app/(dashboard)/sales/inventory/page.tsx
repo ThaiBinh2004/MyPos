@@ -41,7 +41,7 @@ export default function InventoryPage() {
     queryFn: () => getInventory(filters),
   });
 
-  const items = data?.items ?? [];
+  const items = data?.data ?? [];
   const total = data?.total ?? 0;
 
   return (
@@ -59,8 +59,8 @@ export default function InventoryPage() {
             <Select
               options={BRANCH_OPTIONS}
               value={filters.branchId ?? ""}
-              onChange={(v) =>
-                setFilters((f) => ({ ...f, branchId: v || undefined, page: 1 }))
+              onChange={(e) =>
+                setFilters((f) => ({ ...f, branchId: e.target.value || undefined, page: 1 }))
               }
             />
             <Button

@@ -56,7 +56,7 @@ export default function ReportsPage() {
         <Select
           options={BRANCH_OPTIONS}
           value={branchId}
-          onChange={(v) => setBranchId(v)}
+          onChange={(e) => setBranchId(e.target.value)}
         />
       </div>
 

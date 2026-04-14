@@ -101,14 +101,14 @@ export default function OrdersPage() {
           <CardTitle>Bộ lọc</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-end gap-3">
             <Select
               options={STATUS_OPTIONS}
               value={filters.status ?? ""}
-              onChange={(v) =>
+              onChange={(e) =>
                 setFilters((f) => ({
                   ...f,
-                  status: (v as OrderStatus) || undefined,
+                  status: (e.target.value as OrderStatus) || undefined,
                   page: 1,
                 }))
               }
