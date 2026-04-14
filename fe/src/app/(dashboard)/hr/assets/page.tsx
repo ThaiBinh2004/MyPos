@@ -11,8 +11,9 @@ import {
 import { formatDate, formatCurrency } from '@/lib/utils';
 import type { AssetCondition } from '@/types';
 
-const conditionLabel: Record<AssetCondition, { label: string; variant: 'success' | 'warning' | 'danger' }> = {
+const conditionLabel: Record<string, { label: string; variant: 'success' | 'warning' | 'danger' }> = {
   good: { label: 'Tốt', variant: 'success' },
+  fair: { label: 'Trung bình', variant: 'warning' },
   damaged: { label: 'Hỏng', variant: 'warning' },
   missing: { label: 'Mất', variant: 'danger' },
 };

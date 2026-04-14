@@ -11,6 +11,7 @@ import { formatDate, formatDateTime } from '@/lib/utils';
 import type { AttendanceFilters } from '@/types';
 
 const statusLabel: Record<string, { label: string; variant: 'success' | 'danger' | 'warning' | 'default' | 'info' }> = {
+  present: { label: 'Có mặt', variant: 'success' },
   on_time: { label: 'Đúng giờ', variant: 'success' },
   late: { label: 'Trễ', variant: 'warning' },
   early_leave: { label: 'Về sớm', variant: 'warning' },
