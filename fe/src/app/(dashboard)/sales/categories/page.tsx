@@ -25,6 +25,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
+import { isAdmin } from "@/lib/permissions";
+import { useAuth } from "@/contexts/auth-context";
 
 const schema = z.object({
   categoryName: z.string().min(1, "Bắt buộc"),
@@ -35,6 +37,8 @@ type FormData = z.infer<typeof schema>;
 
 export default function CategoriesPage() {
   const qc = useQueryClient();
+  const { user } = useAuth();
+  const admin = isAdmin(user?.role ?? '');
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
 
@@ -102,10 +106,11 @@ export default function CategoriesPage() {
 
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Danh mục sản phẩm</h1>
-        <Button onClick={openCreate}>Thêm danh mục</Button>
-      </div>
+      {admin && (
+        <div className="flex justify-end">
+          <Button onClick={openCreate}>Thêm danh mục</Button>
+        </div>
+      )}
 
       <Card>
         <CardContent className="p-0">
@@ -136,23 +141,21 @@ export default function CategoriesPage() {
                     <TableTd className="font-medium">{cat.categoryName}</TableTd>
                     <TableTd>{cat.description ?? "—"}</TableTd>
                     <TableTd>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openEdit(cat)}
-                        >
-                          <Pencil size={14} />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="danger"
-                          onClick={() => deleteMutation.mutate(cat.categoryId)}
-                          loading={deleteMutation.isPending}
-                        >
-                          <Trash2 size={14} />
-                        </Button>
-                      </div>
+                      {admin && (
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => openEdit(cat)}>
+                            <Pencil size={14} />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            onClick={() => deleteMutation.mutate(cat.categoryId)}
+                            loading={deleteMutation.isPending}
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
+                      )}
                     </TableTd>
                   </TableRow>
                 ))

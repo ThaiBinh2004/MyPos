@@ -31,6 +31,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { formatDate } from "@/lib/utils";
+import { isManager } from "@/lib/permissions";
+import { useAuth } from "@/contexts/auth-context";
 
 const PO_STATUS_LABELS: Record<PurchaseOrderStatus, string> = {
   pending: "Chờ nhập",
@@ -63,6 +65,8 @@ type Tab = "suppliers" | "purchase-orders";
 
 export default function SuppliersPage() {
   const qc = useQueryClient();
+  const { user } = useAuth();
+  const manager = isManager(user?.role ?? '');
   const [tab, setTab] = useState<Tab>("suppliers");
   const [showModal, setShowModal] = useState(false);
 
@@ -95,16 +99,15 @@ export default function SuppliersPage() {
 
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Nhà cung cấp & Nhập hàng</h1>
-        {tab === "suppliers" && (
+      {tab === "suppliers" && manager && (
+        <div className="flex justify-end">
           <Button onClick={() => setShowModal(true)}>Thêm nhà cung cấp</Button>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="flex gap-2 border-b">
         <button
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
             tab === "suppliers"
               ? "border-blue-600 text-blue-600"
               : "border-transparent text-gray-500 hover:text-gray-700"
@@ -114,7 +117,7 @@ export default function SuppliersPage() {
           Nhà cung cấp
         </button>
         <button
-          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
             tab === "purchase-orders"
               ? "border-blue-600 text-blue-600"
               : "border-transparent text-gray-500 hover:text-gray-700"

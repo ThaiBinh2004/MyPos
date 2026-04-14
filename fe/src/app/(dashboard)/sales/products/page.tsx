@@ -26,7 +26,10 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
+import { Pagination } from "@/components/ui/pagination";
 import { formatCurrency } from "@/lib/utils";
+import { isManager } from "@/lib/permissions";
+import { useAuth } from "@/contexts/auth-context";
 
 const STATUS_OPTIONS = [
   { value: "", label: "Tất cả" },
@@ -48,6 +51,8 @@ type FormData = z.infer<typeof schema>;
 
 export default function ProductsPage() {
   const qc = useQueryClient();
+  const { user } = useAuth();
+  const manager = isManager(user?.role ?? '');
   const [filters, setFilters] = useState<ProductFilters>({ page: 1, pageSize: 20 });
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -97,10 +102,11 @@ export default function ProductsPage() {
 
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Sản phẩm</h1>
-        <Button onClick={() => setShowModal(true)}>Thêm sản phẩm</Button>
-      </div>
+      {manager && (
+        <div className="flex justify-end">
+          <Button onClick={() => setShowModal(true)}>Thêm sản phẩm</Button>
+        </div>
+      )}
 
       <Card>
         <CardHeader>
@@ -200,7 +206,12 @@ export default function ProductsPage() {
         </CardContent>
       </Card>
 
-      <div className="text-sm text-gray-500">Tổng: {total} sản phẩm</div>
+      <Pagination
+        page={filters.page ?? 1}
+        total={total}
+        pageSize={filters.pageSize ?? 20}
+        onChange={(p) => setFilters((f) => ({ ...f, page: p }))}
+      />
 
       <Modal
         isOpen={showModal}

@@ -6,9 +6,11 @@ import { Download } from 'lucide-react';
 import { getPayrolls, confirmPayroll, markAsPaid, exportPayroll, getPaySlip } from '@/services/payroll.service';
 import {
   Button, Select, Badge, Table, TableHead, TableBody,
-  TableRow, TableTh, TableTd, PageSpinner,
+  TableRow, TableTh, TableTd, PageSpinner, Pagination,
 } from '@/components/ui';
 import { formatCurrency } from '@/lib/utils';
+import { isManager } from '@/lib/permissions';
+import { useAuth } from '@/contexts/auth-context';
 import type { PayrollStatus } from '@/types';
 
 const statusLabel: Record<PayrollStatus, { label: string; variant: 'default' | 'warning' | 'success' }> = {
@@ -26,13 +28,16 @@ const years = [2024, 2025, 2026].map((y) => ({ value: String(y), label: String(y
 
 export default function PayrollPage() {
   const qc = useQueryClient();
+  const { user } = useAuth();
+  const manager = isManager(user?.role ?? '');
   const now = new Date();
   const [monthNum, setMonthNum] = useState(now.getMonth() + 1);
   const [yearNum, setYearNum] = useState(now.getFullYear());
+  const [page, setPage] = useState(1);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['payroll', monthNum, yearNum],
-    queryFn: () => getPayrolls({ monthNum, yearNum, page: 1, pageSize: 50 }),
+    queryKey: ['payroll', monthNum, yearNum, page],
+    queryFn: () => getPayrolls({ monthNum, yearNum, page, pageSize: 20 }),
   });
 
   const confirm = useMutation({
@@ -57,19 +62,20 @@ export default function PayrollPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Bảng lương</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExport}>
-            <Download size={16} /> Xuất Excel
-          </Button>
-          <Button variant="secondary" onClick={() => confirm.mutate()} loading={confirm.isPending}>
-            Xác nhận
-          </Button>
-          <Button onClick={() => paid.mutate()} loading={paid.isPending}>
-            Đánh dấu đã trả
-          </Button>
-        </div>
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" onClick={handleExport}>
+          <Download size={16} /> Xuất Excel
+        </Button>
+        {manager && (
+          <>
+            <Button variant="secondary" onClick={() => confirm.mutate()} loading={confirm.isPending}>
+              Xác nhận
+            </Button>
+            <Button onClick={() => paid.mutate()} loading={paid.isPending}>
+              Đánh dấu đã trả
+            </Button>
+          </>
+        )}
       </div>
 
       <div className="flex gap-3">
@@ -88,6 +94,7 @@ export default function PayrollPage() {
       </div>
 
       {isLoading ? <PageSpinner /> : (
+        <>
         <Table>
           <TableHead>
             <TableRow>
@@ -137,6 +144,8 @@ export default function PayrollPage() {
             })}
           </TableBody>
         </Table>
+        {data && <Pagination page={page} total={data.total} pageSize={20} onChange={(p) => { setPage(p); }} />}
+        </>
       )}
     </div>
   );

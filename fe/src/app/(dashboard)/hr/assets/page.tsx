@@ -6,9 +6,11 @@ import { Plus } from 'lucide-react';
 import { getAssets, createAsset } from '@/services/asset.service';
 import {
   Button, Badge, Table, TableHead, TableBody,
-  TableRow, TableTh, TableTd, Modal, PageSpinner, Input, Select,
+  TableRow, TableTh, TableTd, Modal, PageSpinner, Input, Select, Pagination,
 } from '@/components/ui';
 import { formatDate, formatCurrency } from '@/lib/utils';
+import { isManager } from '@/lib/permissions';
+import { useAuth } from '@/contexts/auth-context';
 import type { AssetCondition } from '@/types';
 
 const conditionLabel: Record<string, { label: string; variant: 'success' | 'warning' | 'danger' }> = {
@@ -20,14 +22,18 @@ const conditionLabel: Record<string, { label: string; variant: 'success' | 'warn
 
 export default function AssetsPage() {
   const qc = useQueryClient();
+  const { user } = useAuth();
+  const manager = isManager(user?.role ?? '');
   const [openForm, setOpenForm] = useState(false);
   const [assetName, setAssetName] = useState('');
   const [assetType, setAssetType] = useState('');
   const [assetValue, setAssetValue] = useState('');
 
+  const [page, setPage] = useState(1);
+
   const { data, isLoading } = useQuery({
-    queryKey: ['assets'],
-    queryFn: () => getAssets({ page: 1, pageSize: 50 }),
+    queryKey: ['assets', page],
+    queryFn: () => getAssets({ page, pageSize: 20 }),
   });
 
   const create = useMutation({
@@ -41,14 +47,16 @@ export default function AssetsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Tài sản</h1>
-        <Button onClick={() => setOpenForm(true)}>
-          <Plus size={16} /> Thêm tài sản
-        </Button>
-      </div>
+      {manager && (
+        <div className="flex justify-end">
+          <Button onClick={() => setOpenForm(true)}>
+            <Plus size={16} /> Thêm tài sản
+          </Button>
+        </div>
+      )}
 
       {isLoading ? <PageSpinner /> : (
+        <>
         <Table>
           <TableHead>
             <TableRow>
@@ -76,6 +84,8 @@ export default function AssetsPage() {
             })}
           </TableBody>
         </Table>
+        {data && <Pagination page={page} total={data.total} pageSize={20} onChange={setPage} />}
+        </>
       )}
 
       <Modal open={openForm} onClose={() => setOpenForm(false)} title="Thêm tài sản">

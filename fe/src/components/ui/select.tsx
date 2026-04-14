@@ -12,19 +12,20 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
 
 export function Select({ label, error, options, placeholder, className, id, ...props }: SelectProps) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1.5">
       {label && (
-        <label htmlFor={id} className="text-sm font-medium text-gray-700">
+        <label htmlFor={id} className="text-xs font-medium text-gray-600">
           {label}
         </label>
       )}
       <select
         id={id}
         className={cn(
-          'rounded-md border border-gray-300 px-3 py-2 text-sm outline-none bg-white',
-          'focus:border-blue-500 focus:ring-1 focus:ring-blue-500',
-          'disabled:bg-gray-50 disabled:cursor-not-allowed',
-          error && 'border-red-500 focus:border-red-500 focus:ring-red-500',
+          'h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 outline-none transition-all cursor-pointer',
+          'hover:border-gray-300',
+          'focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100',
+          'disabled:bg-gray-50 disabled:cursor-not-allowed disabled:text-gray-400',
+          error && 'border-red-400 focus:border-red-400 focus:ring-red-100',
           className
         )}
         {...props}

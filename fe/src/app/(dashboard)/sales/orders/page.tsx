@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Pagination } from "@/components/ui/pagination";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
@@ -92,9 +93,6 @@ export default function OrdersPage() {
 
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Đơn hàng</h1>
-      </div>
 
       <Card>
         <CardHeader>
@@ -208,9 +206,12 @@ export default function OrdersPage() {
         </CardContent>
       </Card>
 
-      <div className="text-sm text-gray-500">
-        Tổng: {total} đơn hàng
-      </div>
+      <Pagination
+        page={filters.page ?? 1}
+        total={total}
+        pageSize={filters.pageSize ?? 20}
+        onChange={(p) => setFilters((f) => ({ ...f, page: p }))}
+      />
     </div>
   );
 }

@@ -21,6 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { Pagination } from "@/components/ui/pagination";
 import { formatDate } from "@/lib/utils";
 
 const BRANCH_OPTIONS = [
@@ -46,9 +47,6 @@ export default function InventoryPage() {
 
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Tồn kho</h1>
-      </div>
 
       <Card>
         <CardHeader>
@@ -125,7 +123,12 @@ export default function InventoryPage() {
         </CardContent>
       </Card>
 
-      <div className="text-sm text-gray-500">Tổng: {total} mục</div>
+      <Pagination
+        page={filters.page ?? 1}
+        total={total}
+        pageSize={filters.pageSize ?? 20}
+        onChange={(p) => setFilters((f) => ({ ...f, page: p }))}
+      />
     </div>
   );
 }

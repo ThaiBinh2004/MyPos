@@ -7,3 +7,5 @@ export { Table, TableHead, TableBody, TableRow, TableTh, TableTd } from './table
 export { Modal } from './modal';
 export { Spinner, PageSpinner } from './spinner';
 export { Avatar } from './avatar';
+export { Pagination } from './pagination';
+export { PageHeader } from './page-header';

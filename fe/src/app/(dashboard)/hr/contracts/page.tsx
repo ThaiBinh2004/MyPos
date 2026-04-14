@@ -6,9 +6,11 @@ import { Plus } from 'lucide-react';
 import { getContracts, approveContract, terminateContract } from '@/services/contract.service';
 import {
   Button, Select, Badge, Table, TableHead, TableBody,
-  TableRow, TableTh, TableTd, Modal, PageSpinner,
+  TableRow, TableTh, TableTd, Modal, PageSpinner, Pagination,
 } from '@/components/ui';
 import { formatDate, formatCurrency } from '@/lib/utils';
+import { isManager } from '@/lib/permissions';
+import { useAuth } from '@/contexts/auth-context';
 import type { ContractFilters } from '@/types';
 import { ContractForm } from './contract-form';
 
@@ -21,6 +23,8 @@ const statusLabel: Record<string, { label: string; variant: 'success' | 'danger'
 
 export default function ContractsPage() {
   const qc = useQueryClient();
+  const { user } = useAuth();
+  const manager = isManager(user?.role ?? '');
   const [filters, setFilters] = useState<ContractFilters>({ page: 1, pageSize: 20 });
   const [openForm, setOpenForm] = useState(false);
 
@@ -41,12 +45,13 @@ export default function ContractsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Hợp đồng</h1>
-        <Button onClick={() => setOpenForm(true)}>
-          <Plus size={16} /> Tạo hợp đồng
-        </Button>
-      </div>
+      {manager && (
+        <div className="flex justify-end">
+          <Button onClick={() => setOpenForm(true)}>
+            <Plus size={16} /> Tạo hợp đồng
+          </Button>
+        </div>
+      )}
 
       <div className="flex gap-3">
         <Select
@@ -92,28 +97,39 @@ export default function ContractsPage() {
                   <TableTd>{formatCurrency(c.baseSalary)}</TableTd>
                   <TableTd><Badge variant={status.variant}>{status.label}</Badge></TableTd>
                   <TableTd>
-                    <div className="flex gap-2">
-                      {c.status === 'pending' && (
-                        <Button size="sm" onClick={() => approve.mutate(c.contractId)}>
-                          Duyệt
-                        </Button>
-                      )}
-                      {c.status === 'active' && (
-                        <Button
-                          size="sm"
-                          variant="danger"
-                          onClick={() => terminate.mutate({ id: c.contractId, reason: 'Chấm dứt hợp đồng' })}
-                        >
-                          Chấm dứt
-                        </Button>
-                      )}
-                    </div>
+                    {manager && (
+                      <div className="flex gap-2">
+                        {c.status === 'pending' && (
+                          <Button size="sm" onClick={() => approve.mutate(c.contractId)}>
+                            Duyệt
+                          </Button>
+                        )}
+                        {c.status === 'active' && (
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            onClick={() => terminate.mutate({ id: c.contractId, reason: 'Chấm dứt hợp đồng' })}
+                          >
+                            Chấm dứt
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </TableTd>
                 </TableRow>
               );
             })}
           </TableBody>
         </Table>
+      )}
+
+      {data && (
+        <Pagination
+          page={filters.page ?? 1}
+          total={data.total}
+          pageSize={filters.pageSize ?? 20}
+          onChange={(p) => setFilters((f) => ({ ...f, page: p }))}
+        />
       )}
 
       <Modal open={openForm} onClose={() => setOpenForm(false)} title="Tạo hợp đồng" size="md">

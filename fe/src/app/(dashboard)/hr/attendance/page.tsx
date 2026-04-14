@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAttendanceRecords, getCorrections, reviewCorrection } from '@/services/attendance.service';
 import {
   Button, Select, Badge, Table, TableHead, TableBody,
-  TableRow, TableTh, TableTd, PageSpinner,
+  TableRow, TableTh, TableTd, PageSpinner, Pagination,
 } from '@/components/ui';
 import { formatDate, formatDateTime } from '@/lib/utils';
 import type { AttendanceFilters } from '@/types';
@@ -44,14 +44,13 @@ export default function AttendancePage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold text-gray-900">Chấm công</h1>
 
       <div className="flex gap-2 border-b border-gray-200">
         {(['records', 'corrections'] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
               tab === t
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -84,6 +83,7 @@ export default function AttendancePage() {
           </div>
 
           {loadingRecords ? <PageSpinner /> : (
+            <>
             <Table>
               <TableHead>
                 <TableRow>
@@ -116,6 +116,15 @@ export default function AttendancePage() {
                 })}
               </TableBody>
             </Table>
+            {records && (
+              <Pagination
+                page={filters.page ?? 1}
+                total={records.total}
+                pageSize={filters.pageSize ?? 20}
+                onChange={(p) => setFilters((f) => ({ ...f, page: p }))}
+              />
+            )}
+            </>
           )}
         </>
       )}
