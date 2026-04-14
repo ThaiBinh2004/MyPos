@@ -87,7 +87,7 @@ export default function OrdersPage() {
     setFilters((f) => ({ ...f, dateFrom: dateFrom || undefined, dateTo: dateTo || undefined, page: 1 }));
   }
 
-  const orders = data?.items ?? [];
+  const orders = data?.data ?? [];
   const total = data?.total ?? 0;
 
   return (
