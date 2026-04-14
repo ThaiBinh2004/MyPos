@@ -61,7 +61,7 @@ export default function AssetsPage() {
           </TableHead>
           <TableBody>
             {data?.data.map((a) => {
-              const condition = conditionLabel[a.assetCondition];
+              const condition = conditionLabel[a.assetCondition?.toLowerCase()] ?? { label: a.assetCondition, variant: 'default' as const };
               return (
                 <TableRow key={a.assetId}>
                   <TableTd className="font-medium">{a.assetName}</TableTd>

@@ -108,7 +108,7 @@ export default function RecruitmentPage() {
             </TableHead>
             <TableBody>
               {requests?.data.map((r) => {
-                const status = reqStatusLabel[r.status];
+                const status = reqStatusLabel[r.status?.toLowerCase()] ?? { label: r.status, variant: 'default' as const };
                 return (
                   <TableRow key={r.requestId}>
                     <TableTd className="font-medium">{r.position}</TableTd>
@@ -139,8 +139,8 @@ export default function RecruitmentPage() {
             </TableHead>
             <TableBody>
               {candidates?.data.map((c) => {
-                const status = candidateStatusLabel[c.status];
-                const next = nextStatus[c.status];
+                const status = candidateStatusLabel[c.status?.toLowerCase()] ?? { label: c.status, variant: 'default' as const };
+                const next = nextStatus[c.status?.toLowerCase()];
                 return (
                   <TableRow key={c.candidateId}>
                     <TableTd>
