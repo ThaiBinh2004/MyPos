@@ -79,7 +79,7 @@ export default function ContractsPage() {
           </TableHead>
           <TableBody>
             {data?.data.map((c) => {
-              const status = statusLabel[c.status];
+              const status = statusLabel[c.status?.toLowerCase()] ?? { label: c.status, variant: 'default' as const };
               return (
                 <TableRow key={c.contractId}>
                   <TableTd>

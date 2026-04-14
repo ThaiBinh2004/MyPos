@@ -97,7 +97,7 @@ export default function AttendancePage() {
               </TableHead>
               <TableBody>
                 {records?.data.map((r) => {
-                  const status = statusLabel[r.status];
+                  const status = statusLabel[r.status?.toLowerCase()] ?? { label: r.status, variant: 'default' as const };
                   return (
                     <TableRow key={r.attendanceId}>
                       <TableTd>

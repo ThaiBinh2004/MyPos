@@ -105,7 +105,7 @@ export default function PayrollPage() {
           </TableHead>
           <TableBody>
             {data?.data.map((p) => {
-              const status = statusLabel[p.status];
+              const status = statusLabel[p.status?.toLowerCase()] ?? { label: p.status, variant: 'default' as const };
               return (
                 <TableRow key={p.payrollId}>
                   <TableTd>
