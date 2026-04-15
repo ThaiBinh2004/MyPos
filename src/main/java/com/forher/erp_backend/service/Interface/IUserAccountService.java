@@ -3,7 +3,7 @@ package com.forher.erp_backend.service.Interface;
 import com.forher.erp_backend.entity.UserAccount;
 import java.util.List;
 
-public interface IUserAccountService {
+public interface    IUserAccountService {
     List<UserAccount> getAllAccounts();
     UserAccount getAccountById(String id);
     UserAccount createAccount(UserAccount account);
@@ -14,5 +14,4 @@ public interface IUserAccountService {
     void changePassword(String accountId, String oldPassword, String newPassword);
 
     // Nghiệp vụ: Khóa/Mở khóa tài khoản
-    void toggleAccountStatus(String accountId, boolean isActive);
-}
+    void toggleAccountStatus(String accountId, Integer isActive);}

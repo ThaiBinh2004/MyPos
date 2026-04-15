@@ -4,6 +4,7 @@ import com.forher.erp_backend.service.Interface.IInventoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,6 +15,8 @@ public class InventoryController {
     private final IInventoryService inventoryService;
 
     // 1. Lấy danh sách sản phẩm sắp hết hàng tại 1 chi nhánh
+    // Mọi người đều cần xem để nắm tình hình tồn kho
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'EMPLOYEE')")
     @GetMapping("/alerts/{branchId}")
     public ResponseEntity<?> getLowStockAlerts(@PathVariable String branchId) {
         try {
@@ -24,6 +27,8 @@ public class InventoryController {
     }
 
     // 2. Kiểm tra xem kho có đủ hàng để bán không
+    // Nhân viên phải dùng API này liên tục khi quét mã vạch lên đơn
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'EMPLOYEE')")
     @GetMapping("/check")
     public ResponseEntity<?> checkAvailability(
             @RequestParam String productId,

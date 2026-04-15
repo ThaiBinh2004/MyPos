@@ -5,6 +5,7 @@ import com.forher.erp_backend.service.Interface.ICategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,6 +15,9 @@ public class CategoryController {
 
     private final ICategoryService categoryService;
 
+    // NGHIỆP VỤ: Xem toàn bộ danh sách danh mục
+    // Mọi Role đều được xem để phục vụ việc tìm kiếm, bán hàng
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'EMPLOYEE')")
     @GetMapping
     public ResponseEntity<?> getAllCategories() {
         try {
@@ -23,6 +27,8 @@ public class CategoryController {
         }
     }
 
+    // NGHIỆP VỤ: Xem chi tiết 1 danh mục
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'EMPLOYEE')")
     @GetMapping("/{id}")
     public ResponseEntity<?> getCategoryById(@PathVariable String id) {
         try {
@@ -34,6 +40,9 @@ public class CategoryController {
         }
     }
 
+    // NGHIỆP VỤ: Tạo danh mục mới
+    // CHỈ ADMIN và MANAGER mới có quyền quản lý danh mục
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @PostMapping
     public ResponseEntity<?> createCategory(@RequestBody Category category) {
         try {
@@ -43,6 +52,8 @@ public class CategoryController {
         }
     }
 
+    // NGHIỆP VỤ: Cập nhật thông tin danh mục
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @PutMapping("/{id}")
     public ResponseEntity<?> updateCategory(@PathVariable String id, @RequestBody Category categoryDetails) {
         try {
@@ -54,6 +65,8 @@ public class CategoryController {
         }
     }
 
+    // NGHIỆP VỤ: Xóa danh mục
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteCategory(@PathVariable String id) {
         try {

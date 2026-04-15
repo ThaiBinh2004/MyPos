@@ -21,7 +21,7 @@ public class UserAccount {
     private String role; // Ví dụ: ADMIN, HR_MANAGER, SALES_STAFF...
 
     @Column(name = "is_active")
-    private Boolean isActive = true; // Trạng thái khóa/mở tài khoản
+    private Integer isActive = 1; // Trạng thái khóa/mở tài khoản
 
     // Mối quan hệ 1-1: Mỗi tài khoản thường gắn với 1 nhân viên cụ thể
     @OneToOne(fetch = FetchType.LAZY)

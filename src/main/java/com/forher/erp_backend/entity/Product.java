@@ -32,8 +32,12 @@ public class Product {
     @Column(name = "color", length = 50)
     private String color;
 
-    @Column(name = "category", length = 100)
-    private String category;
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
 
     @Column(name = "status", length = 20, nullable = false)
     private String status = "ACTIVE";

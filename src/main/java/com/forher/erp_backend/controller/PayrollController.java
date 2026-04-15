@@ -4,6 +4,7 @@ import com.forher.erp_backend.service.Interface.IPayrollService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,7 +14,9 @@ public class PayrollController {
 
     private final IPayrollService payrollService;
 
-    // NGHIỆP VỤ: Kế toán bấm nút tính lương cuối tháng cho 1 NV
+    // NGHIỆP VỤ: Tính lương cuối tháng cho 1 NV
+    // Quản lý chi nhánh hoặc Giám đốc thực hiện
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @PostMapping("/calculate")
     public ResponseEntity<?> calculatePayroll(
             @RequestParam String employeeId,
@@ -28,6 +31,8 @@ public class PayrollController {
     }
 
     // NGHIỆP VỤ: Giám đốc duyệt bảng lương
+    // CHỈ ADMIN (Giám đốc) mới có quyền phê duyệt dòng tiền
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{payrollId}/approve")
     public ResponseEntity<?> approvePayroll(
             @PathVariable String payrollId,

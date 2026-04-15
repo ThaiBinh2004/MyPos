@@ -5,6 +5,7 @@ import com.forher.erp_backend.service.Interface.IOrdersService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,11 +15,15 @@ public class OrdersController {
 
     private final IOrdersService ordersService;
 
+    // NGHIỆP VỤ: Xem toàn bộ danh sách đơn hàng
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'EMPLOYEE')")
     @GetMapping
     public ResponseEntity<?> getAllOrders() {
         return ResponseEntity.ok(ordersService.getAllOrders());
     }
 
+    // NGHIỆP VỤ: Xem chi tiết 1 đơn hàng
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'EMPLOYEE')")
     @GetMapping("/{id}")
     public ResponseEntity<?> getOrderById(@PathVariable String id) {
         try {
@@ -28,19 +33,22 @@ public class OrdersController {
         }
     }
 
-    // 1. Tạo đơn Online (Khách tự đặt)
+    // 1. Tạo đơn Online (Nhân viên tạo đơn khi khách chốt qua tin nhắn)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'EMPLOYEE')")
     @PostMapping("/online")
     public ResponseEntity<?> createOnlineOrder(@RequestBody Orders order) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ordersService.createOnlineOrder(order));
     }
 
     // 2. Tạo đơn Offline (Bán tại quầy POS)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'EMPLOYEE')")
     @PostMapping("/offline")
     public ResponseEntity<?> createOfflineOrder(@RequestBody Orders order) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ordersService.createOfflineOrder(order));
     }
 
-    // 3. Áp dụng mã giảm giá
+    // 3. Áp dụng mã giảm giá / chiết khấu
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'EMPLOYEE')")
     @PatchMapping("/{id}/discount")
     public ResponseEntity<?> applyDiscount(@PathVariable String id, @RequestParam double discountAmount) {
         try {
@@ -52,6 +60,7 @@ public class OrdersController {
     }
 
     // 4. Thanh toán đơn hàng
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'EMPLOYEE')")
     @PatchMapping("/{id}/payment")
     public ResponseEntity<?> processPayment(@PathVariable String id, @RequestParam String paymentMethod) {
         try {
@@ -63,6 +72,7 @@ public class OrdersController {
     }
 
     // 5. Hủy đơn hàng
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'EMPLOYEE')")
     @PatchMapping("/{id}/cancel")
     public ResponseEntity<?> cancelOrder(@PathVariable String id) {
         try {

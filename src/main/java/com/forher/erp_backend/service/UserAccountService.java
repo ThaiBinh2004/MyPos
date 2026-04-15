@@ -4,6 +4,7 @@ import com.forher.erp_backend.entity.UserAccount;
 import com.forher.erp_backend.repository.UserAccountRepository;
 import com.forher.erp_backend.service.Interface.IUserAccountService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,7 @@ import java.util.List;
 public class UserAccountService implements IUserAccountService {
 
     private final UserAccountRepository userAccountRepository;
+    private final PasswordEncoder passwordEncoder; // Thêm công cụ mã hóa của Spring Security
 
     @Override
     public List<UserAccount> getAllAccounts() {
@@ -29,11 +31,13 @@ public class UserAccountService implements IUserAccountService {
     @Override
     @Transactional
     public UserAccount createAccount(UserAccount account) {
-        // Kiểm tra xem username đã tồn tại chưa
-        if (userAccountRepository.findByUsername(account.getUsername()).isPresent()) {
-            throw new RuntimeException("Tên đăng nhập đã tồn tại: " + account.getUsername());
+        // Mặc dù đã có Register ở AuthService, nhưng Admin vẫn có thể tạo tay ở đây
+        // Phải mã hóa mật khẩu trước khi lưu
+        account.setPassword(passwordEncoder.encode(account.getPassword()));
+
+        if (account.getIsActive() == null) {
+            account.setIsActive(1); // Mặc định là mở khóa
         }
-        // Ở thực tế, chỗ này sẽ phải mã hóa password (ví dụ dùng BCrypt) trước khi lưu
         return userAccountRepository.save(account);
     }
 
@@ -44,7 +48,6 @@ public class UserAccountService implements IUserAccountService {
 
         existingAccount.setRole(accountDetails.getRole());
         existingAccount.setIsActive(accountDetails.getIsActive());
-        // Thường thì username không được phép đổi, chỉ đổi role hoặc trạng thái
 
         return userAccountRepository.save(existingAccount);
     }
@@ -61,19 +64,21 @@ public class UserAccountService implements IUserAccountService {
     public void changePassword(String accountId, String oldPassword, String newPassword) {
         UserAccount account = getAccountById(accountId);
 
-        // So sánh mật khẩu cũ (sau này dùng PasswordEncoder)
-        if (!account.getPassword().equals(oldPassword)) {
+        // Dùng passwordEncoder.matches để so sánh pass người dùng nhập với chuỗi đã mã hóa trong DB
+        if (!passwordEncoder.matches(oldPassword, account.getPassword())) {
             throw new RuntimeException("Mật khẩu cũ không chính xác!");
         }
 
-        account.setPassword(newPassword); // Set mật khẩu mới
+        // Mã hóa mật khẩu mới rồi mới lưu
+        account.setPassword(passwordEncoder.encode(newPassword));
         userAccountRepository.save(account);
     }
 
     @Override
     @Transactional
-    public void toggleAccountStatus(String accountId, boolean isActive) {
+    public void toggleAccountStatus(String accountId, Integer isActive) {
         UserAccount account = getAccountById(accountId);
+        // isActive: 1 là mở khóa, 0 là khóa
         account.setIsActive(isActive);
         userAccountRepository.save(account);
     }
