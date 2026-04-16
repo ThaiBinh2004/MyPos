@@ -1,69 +1,53 @@
 import api from '@/lib/axios';
 import type {
-  AttendanceRecord,
-  AttendanceFilters,
-  AttendanceCorrection,
-  KioskCheckinPayload,
-  KioskCheckoutPayload,
-  CorrectionRequestPayload,
-  ReviewCorrectionPayload,
-  PaginatedResponse,
+  AttendanceRecord, AttendanceFilters, AttendanceCorrection,
+  TodayAttendance, CorrectionPayload,
 } from '@/types';
 
-export async function getAttendanceRecords(
-  filters?: AttendanceFilters
-): Promise<PaginatedResponse<AttendanceRecord>> {
-  const { data } = await api.get<PaginatedResponse<AttendanceRecord>>('/hr/attendance', {
-    params: filters,
+export async function getAttendanceRecords(filters?: AttendanceFilters): Promise<AttendanceRecord[]> {
+  const { data } = await api.get<AttendanceRecord[]>('/hr/attendance', { params: filters });
+  return data;
+}
+
+export async function getTodayAttendance(branchId?: string): Promise<TodayAttendance[]> {
+  const { data } = await api.get<TodayAttendance[]>('/hr/attendance/today', {
+    params: branchId ? { branchId } : {},
   });
   return data;
 }
 
-export async function getAttendanceRecord(id: number): Promise<AttendanceRecord> {
-  const { data } = await api.get<AttendanceRecord>(`/hr/attendance/${id}`);
+export async function checkin(employeeId: string, password: string): Promise<AttendanceRecord> {
+  const { data } = await api.post<AttendanceRecord>('/hr/attendance/checkin', { employeeId, password });
   return data;
 }
 
-export async function checkin(payload: KioskCheckinPayload): Promise<AttendanceRecord> {
-  const { data } = await api.post<AttendanceRecord>('/hr/attendance/checkin', payload);
+export async function checkout(employeeId: string, password: string): Promise<AttendanceRecord> {
+  const { data } = await api.post<AttendanceRecord>('/hr/attendance/checkout', { employeeId, password });
   return data;
 }
 
-export async function checkout(payload: KioskCheckoutPayload): Promise<AttendanceRecord> {
-  const { data } = await api.post<AttendanceRecord>('/hr/attendance/checkout', payload);
+export async function getCorrections(params?: { branchId?: string; status?: string }): Promise<AttendanceCorrection[]> {
+  const { data } = await api.get<AttendanceCorrection[]>('/hr/attendance/corrections', { params });
   return data;
 }
 
-export async function getCorrections(filters?: {
-  status?: string;
-  branchId?: string;
-  page?: number;
-  pageSize?: number;
-}): Promise<PaginatedResponse<AttendanceCorrection>> {
-  const { data } = await api.get<PaginatedResponse<AttendanceCorrection>>(
-    '/hr/attendance/corrections',
-    { params: filters }
-  );
+export async function getMyCorrections(employeeId: string): Promise<AttendanceCorrection[]> {
+  const { data } = await api.get<AttendanceCorrection[]>('/hr/attendance/corrections/my', {
+    params: { employeeId },
+  });
   return data;
 }
 
-export async function requestCorrection(
-  payload: CorrectionRequestPayload
-): Promise<AttendanceCorrection> {
-  const { data } = await api.post<AttendanceCorrection>(
-    '/hr/attendance/corrections',
-    payload
-  );
+export async function requestCorrection(payload: CorrectionPayload): Promise<AttendanceCorrection> {
+  const { data } = await api.post<AttendanceCorrection>('/hr/attendance/corrections', payload);
   return data;
 }
 
 export async function reviewCorrection(
-  id: number,
-  payload: ReviewCorrectionPayload
-): Promise<AttendanceCorrection> {
-  const { data } = await api.patch<AttendanceCorrection>(
-    `/hr/attendance/corrections/${id}/review`,
-    payload
-  );
-  return data;
+  id: string,
+  status: 'APPROVED' | 'REJECTED',
+  managerId: string,
+  reviewNote?: string,
+): Promise<void> {
+  await api.patch(`/hr/attendance/corrections/${id}/review`, { status, managerId, reviewNote });
 }

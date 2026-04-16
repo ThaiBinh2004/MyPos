@@ -35,6 +35,9 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/v1/auth/**",
+                    "/api/v1/hr/attendance/today",
+                    "/api/v1/hr/attendance/checkin",
+                    "/api/v1/hr/attendance/checkout",
                     "/api/v1/apply",
                     "/api/v1/offers/accept",
                     "/api/v1/offers/decline",

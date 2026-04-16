@@ -36,6 +36,9 @@ public class Attendance {
     @Column(name = "status", length = 30, nullable = false)
     private String status;
 
+    @Column(name = "shift_type", length = 20)
+    private String shiftType; // CA_SANG, CA_TOI
+
     @Column(name = "note", length = 255)
     private String note;
 }

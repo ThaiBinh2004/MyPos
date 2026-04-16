@@ -12,4 +12,5 @@ public interface IEmployeeService {
     void resignEmployee(String id);
     Employee selfUpdate(String id, String phoneNumber, String address, String bankAccount);
     List<Employee> getEmployeesByBranch(String branchId);
+    Employee updateShift(String id, String defaultShift);
 }

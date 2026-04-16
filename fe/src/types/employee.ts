@@ -19,6 +19,7 @@ export interface Employee {
   bankAccount?: string;
   position: string;
   department?: string;
+  defaultShift?: string; // HANH_CHINH | CA_SANG | CA_TOI
   status: string;
   branchId: string;
   branchName: string;
@@ -44,6 +45,7 @@ export interface CreateEmployeePayload {
   bankAccount?: string;
   position: string;
   department?: string;
+  defaultShift?: string;
   branchId: string;
 }
 

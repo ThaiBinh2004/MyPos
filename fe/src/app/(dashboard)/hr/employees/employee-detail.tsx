@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { Pencil, X, Check, ClipboardList, ChevronDown, ChevronUp, PenLine } from 'lucide-react';
+import { Pencil, X, Check, ChevronDown, ChevronUp, PenLine, Banknote } from 'lucide-react';
 import { updateEmployee, selfUpdateEmployee, createProposal } from '@/services/employee.service';
-import { getEmployeeContracts, signContract } from '@/services/contract.service';
+import { getEmployeeContracts, signContract, updateContract } from '@/services/contract.service';
 import { Button, Input, Select, Badge, Modal } from '@/components/ui';
 import { formatDate, formatCurrency } from '@/lib/utils';
 import type { Employee, Branch } from '@/types';
@@ -20,6 +20,12 @@ interface Props {
   onClose: () => void;
 }
 
+const SHIFT_LABEL: Record<string, string> = {
+  HANH_CHINH: 'Hành chính (9:00–18:00)',
+  CA_SANG:    'Ca sáng (7:00–15:00)',
+  CA_TOI:     'Ca tối (15:00–23:00)',
+};
+
 const statusMap: Record<string, { label: string; variant: 'success' | 'danger' | 'default' }> = {
   ACTIVE:   { label: 'Đang làm việc', variant: 'success' },
   RESIGNED: { label: 'Đã nghỉ việc',  variant: 'danger' },
@@ -32,26 +38,40 @@ export function EmployeeDetail({ employee, role, currentEmployeeId, currentEmplo
   const isDirector = role === 'director';
   const isManager  = role === 'branch_manager';
   const isSelf     = currentEmployeeId === employee.employeeId;
-  const canFullEdit = isDirector;
-  const canSelfEdit = isSelf && !isDirector && !isManager;
-  const canEdit     = canFullEdit || canSelfEdit;
-  const canPropose  = isManager && !isSelf;
+  const canFullEdit    = isDirector;
+  const canChangeBranch = isDirector;
+  const canSelfEdit    = isSelf && !isDirector && !isManager;
+  const canEdit        = canFullEdit || canSelfEdit;
+  const canPropose     = isManager && !isSelf;
 
   const [editing, setEditing] = useState(false);
   const [proposing, setProposing] = useState(false);
   const [showContracts, setShowContracts] = useState(defaultOpenContracts);
   const [signingContract, setSigningContract] = useState<typeof contracts[0] | null>(null);
   const [agreed, setAgreed] = useState(false);
+  const [adjustingSalary, setAdjustingSalary] = useState(false);
+  const [newBaseSalary, setNewBaseSalary] = useState('');
+  const [newAllowance, setNewAllowance] = useState('');
 
   const { data: contracts = [], refetch: refetchContracts } = useQuery({
     queryKey: ['employee-contracts', employee.employeeId],
     queryFn: () => getEmployeeContracts(employee.employeeId),
-    enabled: showContracts,
+    enabled: showContracts || isDirector,
   });
 
   const signMut = useMutation({
     mutationFn: (id: string) => signContract(id),
     onSuccess: () => { refetchContracts(); setSigningContract(null); setAgreed(false); },
+  });
+
+  const activeContract = contracts.find((c) => c.status === 'ACTIVE');
+
+  const salaryMut = useMutation({
+    mutationFn: () => updateContract(activeContract!.contractId, {
+      baseSalary: newBaseSalary ? Number(newBaseSalary) : undefined,
+      allowance:  newAllowance  ? Number(newAllowance)  : undefined,
+    }),
+    onSuccess: () => { refetchContracts(); setAdjustingSalary(false); },
   });
   const { register, handleSubmit, reset } = useForm({ defaultValues: { ...employee } });
   const { register: regProp, handleSubmit: handleProp, reset: resetProp, formState: { errors: propErrors } } = useForm<{
@@ -106,10 +126,22 @@ export function EmployeeDetail({ employee, role, currentEmployeeId, currentEmplo
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <Badge variant={st.variant}>{st.label}</Badge>
+            {isDirector && activeContract && !editing && (
+              <button type="button"
+                onClick={() => {
+                  setNewBaseSalary(String(activeContract.baseSalary));
+                  setNewAllowance(String(activeContract.allowance ?? 0));
+                  setShowContracts(true);
+                  setAdjustingSalary(true);
+                }}
+                className="flex items-center gap-1 rounded-md border border-emerald-200 bg-white px-2.5 py-1 text-xs font-medium text-emerald-600 hover:bg-emerald-50 transition-colors">
+                <Banknote size={11} /> Điều chỉnh lương
+              </button>
+            )}
             {canPropose && !editing && (
               <button type="button" onClick={() => { resetProp(); setProposing(true); }}
                 className="flex items-center gap-1 rounded-md border border-amber-200 bg-white px-2.5 py-1 text-xs font-medium text-amber-600 hover:bg-amber-50 transition-colors">
-                <ClipboardList size={11} /> Đề xuất
+                Đề xuất
               </button>
             )}
             {canEdit && !editing && (
@@ -167,17 +199,28 @@ export function EmployeeDetail({ employee, role, currentEmployeeId, currentEmplo
           <Field label="Phòng ban">
             {editing && canFullEdit ? <Input {...register('department')} className="h-7 text-sm" /> : (employee.department ?? '—')}
           </Field>
-          <Field label="Chi nhánh">
+          <Field label="Ca làm việc">
             {editing && canFullEdit
+              ? <Select
+                  options={[
+                    { value: 'HANH_CHINH', label: 'Hành chính (9:00–18:00)' },
+                    { value: 'CA_SANG',    label: 'Ca sáng (7:00–15:00)' },
+                    { value: 'CA_TOI',     label: 'Ca tối (15:00–23:00)' },
+                  ]}
+                  placeholder="Chưa thiết lập"
+                  {...register('defaultShift')}
+                  className="h-7 text-sm"
+                />
+              : SHIFT_LABEL[employee.defaultShift ?? ''] ?? '—'}
+          </Field>
+          <Field label="Chi nhánh">
+            {editing && canChangeBranch
               ? <Select options={branches.map(b => ({ value: b.branchId, label: b.branchName }))} {...register('branchId')} className="h-7 text-sm" />
               : employee.branchName}
           </Field>
           <Field label="Ngày vào làm">{formatDate(employee.createdAt)}</Field>
         </div>
 
-        {isManager && !isSelf && !editing && (
-          <p className="text-xs text-gray-400 text-center">Quản lý chỉ có quyền xem hồ sơ nhân viên.</p>
-        )}
       </form>
 
       {/* Proposal form */}
@@ -222,6 +265,53 @@ export function EmployeeDetail({ employee, role, currentEmployeeId, currentEmplo
             )}
           </form>
         </div>
+      )}
+
+      {/* Salary adjustment modal */}
+      {adjustingSalary && activeContract && (
+        <Modal open onClose={() => setAdjustingSalary(false)} title="Điều chỉnh lương" size="sm">
+          <div className="space-y-4">
+            <div className="rounded-lg bg-gray-50 border border-gray-100 px-4 py-3 text-sm space-y-1">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Lương hiện tại</span>
+                <span className="font-medium">{formatCurrency(activeContract.baseSalary)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Phụ cấp hiện tại</span>
+                <span className="font-medium">{activeContract.allowance ? formatCurrency(activeContract.allowance) : '—'}</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Lương mới (VNĐ)</label>
+                <Input type="number" step="100000" min="0"
+                  value={newBaseSalary}
+                  onChange={(e) => setNewBaseSalary(e.target.value)}
+                  className="h-9 text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Phụ cấp mới (VNĐ)</label>
+                <Input type="number" step="100000" min="0"
+                  value={newAllowance}
+                  onChange={(e) => setNewAllowance(e.target.value)}
+                  className="h-9 text-sm" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <button onClick={() => setAdjustingSalary(false)}
+                className="rounded-md border border-gray-200 px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-50">
+                Huỷ
+              </button>
+              <button
+                onClick={() => salaryMut.mutate()}
+                disabled={salaryMut.isPending}
+                className="flex items-center gap-1.5 rounded-md bg-emerald-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors">
+                <Check size={12} />
+                {salaryMut.isPending ? 'Đang lưu...' : 'Xác nhận điều chỉnh'}
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
 
       {/* Sign confirmation dialog */}

@@ -59,6 +59,12 @@ public class EmployeeController {
         } catch (RuntimeException e) { return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage()); }
     }
 
+    @PatchMapping("/{id}/shift")
+    public ResponseEntity<?> updateShift(@PathVariable String id, @RequestBody Map<String, String> body) {
+        try { return ResponseEntity.ok(EmployeeResponse.from(employeeService.updateShift(id, body.get("defaultShift")))); }
+        catch (RuntimeException e) { return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage()); }
+    }
+
     @PatchMapping("/{id}/deactivate")
     public ResponseEntity<?> deactivate(@PathVariable String id) {
         try { employeeService.resignEmployee(id); return ResponseEntity.ok("Đã vô hiệu hóa nhân viên."); }

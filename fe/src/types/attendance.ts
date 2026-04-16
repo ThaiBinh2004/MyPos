@@ -1,11 +1,6 @@
-export type AttendanceStatus =
-  | 'on_time'
-  | 'late'
-  | 'early_leave'
-  | 'absent'
-  | 'missing_checkout';
-
-export type CorrectionStatus = 'pending' | 'approved' | 'rejected';
+export type AttendanceStatus = 'ON_TIME' | 'LATE' | 'EARLY_LEAVE' | 'ABSENT' | 'MISSING_CHECKOUT' | 'CORRECTED' | string;
+export type CorrectionStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | string;
+export type KioskStatus = 'NOT_IN' | 'ON_TIME' | 'LATE' | 'DONE' | string;
 
 export interface AttendanceRecord {
   attendanceId: number;
@@ -15,45 +10,49 @@ export interface AttendanceRecord {
   checkInTime?: string;
   checkOutTime?: string;
   totalHours?: number;
+  shiftType?: string;  // CA_SANG | CA_TOI
   status: AttendanceStatus;
   note?: string;
 }
 
-export interface AttendanceCorrection {
-  requestId: number;
+export interface TodayAttendance {
   employeeId: string;
   employeeName: string;
-  attendanceId: number;
+  position?: string;
+  defaultShift?: string;
+  attendanceId?: number;
+  checkInTime?: string;
+  checkOutTime?: string;
+  status: KioskStatus;
+}
+
+export interface AttendanceCorrection {
+  requestId: string;
+  employeeId: string;
+  employeeName: string;
+  branchId?: string;
+  attendanceId?: number;
+  requestedCheckIn?: string;
+  requestedCheckOut?: string;
+  reason: string;
   requestDate: string;
   status: CorrectionStatus;
-  approvedBy?: string;
+  approvedByName?: string;
+  reviewNote?: string;
 }
 
 export interface AttendanceFilters {
   branchId?: string;
-  employeeId?: string;
+  search?: string;
   dateFrom?: string;
   dateTo?: string;
-  status?: AttendanceStatus;
-  page?: number;
-  pageSize?: number;
+  status?: string;
 }
 
-export interface KioskCheckinPayload {
+export interface CorrectionPayload {
   employeeId: string;
-  pin: string;
-}
-
-export interface KioskCheckoutPayload {
-  employeeId: string;
-  pin: string;
-}
-
-export interface CorrectionRequestPayload {
-  attendanceId: number;
+  attendanceId?: number;
+  requestedCheckIn?: string;
+  requestedCheckOut?: string;
   reason: string;
-}
-
-export interface ReviewCorrectionPayload {
-  status: CorrectionStatus;
 }

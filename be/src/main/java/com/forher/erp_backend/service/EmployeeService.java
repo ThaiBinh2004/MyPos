@@ -57,6 +57,7 @@ public class EmployeeService implements IEmployeeService {
         existing.setBankAccount(details.getBankAccount());
         existing.setPosition(details.getPosition());
         existing.setDepartment(details.getDepartment());
+        existing.setDefaultShift(details.getDefaultShift());
         if (details.getBranch() != null && details.getBranch().getBranchId() != null) {
             Branch branch = branchRepository.findById(details.getBranch().getBranchId())
                     .orElseThrow(() -> new RuntimeException("Chi nhánh không tồn tại"));
@@ -73,6 +74,14 @@ public class EmployeeService implements IEmployeeService {
         if (phoneNumber != null) existing.setPhoneNumber(phoneNumber);
         if (address != null) existing.setAddress(address);
         if (bankAccount != null) existing.setBankAccount(bankAccount);
+        return employeeRepository.save(existing);
+    }
+
+    @Override
+    @Transactional
+    public Employee updateShift(String id, String defaultShift) {
+        Employee existing = getEmployeeById(id);
+        existing.setDefaultShift(defaultShift);
         return employeeRepository.save(existing);
     }
 

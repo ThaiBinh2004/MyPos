@@ -43,6 +43,11 @@ export async function selfUpdateEmployee(id: string, payload: SelfUpdatePayload)
   return data;
 }
 
+export async function updateEmployeeShift(id: string, defaultShift: string): Promise<Employee> {
+  const { data } = await api.patch<Employee>(`/hr/employees/${id}/shift`, { defaultShift });
+  return data;
+}
+
 export async function deactivateEmployee(id: string): Promise<void> {
   await api.patch(`/hr/employees/${id}/deactivate`);
 }

@@ -47,6 +47,10 @@ public class Employee {
     @Column(name = "department", length = 100)
     private String department;
 
+    // Ca làm việc mặc định: HANH_CHINH | CA_SANG | CA_TOI
+    @Column(name = "default_shift", length = 20)
+    private String defaultShift;
+
     @Column(name = "status", length = 20, nullable = false)
     @Builder.Default
     private String status = "ACTIVE";

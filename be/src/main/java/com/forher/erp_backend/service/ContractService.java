@@ -81,11 +81,12 @@ public class ContractService implements IContractService {
         if ("TERMINATED".equals(status) || "PENDING".equals(status))
             throw new RuntimeException("Không thể chỉnh sửa hợp đồng ở trạng thái này!");
 
-        // ACTIVE: chỉ cho sửa phụ cấp, vị trí, gia hạn (ngày kết thúc)
+        // ACTIVE: cho sửa lương, phụ cấp, vị trí, gia hạn (ngày kết thúc)
         if ("ACTIVE".equals(status)) {
-            if (details.getAllowance() != null) existing.setAllowance(details.getAllowance());
-            if (details.getPosition() != null) existing.setPosition(details.getPosition());
-            if (details.getEndDate() != null) existing.setEndDate(details.getEndDate());
+            if (details.getBaseSalary() != null) existing.setBaseSalary(details.getBaseSalary());
+            if (details.getAllowance()  != null) existing.setAllowance(details.getAllowance());
+            if (details.getPosition()  != null) existing.setPosition(details.getPosition());
+            if (details.getEndDate()   != null) existing.setEndDate(details.getEndDate());
             return contractRepository.save(existing);
         }
 
