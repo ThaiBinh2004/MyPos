@@ -6,6 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface EmployeeRepository extends JpaRepository<Employee, String> {
-    // Có thể tự định nghĩa thêm hàm tìm kiếm theo số điện thoại (ví dụ)
-    // Optional<Employee> findByPhoneNumber(String phoneNumber);
+    java.util.List<Employee> findByBranchBranchId(String branchId);
 }

@@ -1,9 +1,10 @@
 import { cn } from '@/lib/utils';
 
 interface TableProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   className?: string;
   colSpan?: number;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 export function Table({ children, className }: TableProps) {
@@ -28,9 +29,9 @@ export function TableBody({ children }: TableProps) {
   return <tbody className="divide-y divide-gray-50">{children}</tbody>;
 }
 
-export function TableRow({ children, className }: TableProps) {
+export function TableRow({ children, className, onClick }: TableProps) {
   return (
-    <tr className={cn('transition-colors hover:bg-indigo-50/30', className)}>
+    <tr onClick={onClick} className={cn('transition-colors hover:bg-indigo-50/30', className)}>
       {children}
     </tr>
   );
@@ -44,9 +45,9 @@ export function TableTh({ children, className }: TableProps) {
   );
 }
 
-export function TableTd({ children, className, colSpan }: TableProps) {
+export function TableTd({ children, className, colSpan, onClick }: TableProps) {
   return (
-    <td colSpan={colSpan} className={cn('px-4 py-3.5 text-gray-700', className)}>
+    <td colSpan={colSpan} onClick={onClick} className={cn('px-4 py-3.5 text-gray-700', className)}>
       {children}
     </td>
   );

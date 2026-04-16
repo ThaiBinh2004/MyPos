@@ -10,11 +10,7 @@ import java.time.LocalDateTime;
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Entity
 @Table(name = "EMPLOYEE")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Employee {
 
     @Id
@@ -27,6 +23,9 @@ public class Employee {
     @Column(name = "date_of_birth", nullable = false)
     private LocalDate dateOfBirth;
 
+    @Column(name = "gender", length = 10)
+    private String gender; // MALE | FEMALE | OTHER
+
     @Column(name = "id_card", length = 20, nullable = false, unique = true)
     private String idCard;
 
@@ -36,11 +35,17 @@ public class Employee {
     @Column(name = "phone_number", length = 15)
     private String phoneNumber;
 
+    @Column(name = "address", length = 255)
+    private String address;
+
     @Column(name = "bank_account", length = 30)
     private String bankAccount;
 
     @Column(name = "position", length = 100, nullable = false)
     private String position;
+
+    @Column(name = "department", length = 100)
+    private String department;
 
     @Column(name = "status", length = 20, nullable = false)
     @Builder.Default

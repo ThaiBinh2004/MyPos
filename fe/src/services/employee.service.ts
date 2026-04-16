@@ -4,8 +4,11 @@ import type {
   EmployeeFilters,
   CreateEmployeePayload,
   UpdateEmployeePayload,
+  SelfUpdatePayload,
   Branch,
   PaginatedResponse,
+  EmployeeProposal,
+  CreateProposalPayload,
 } from '@/types';
 
 export async function getEmployees(
@@ -35,11 +38,36 @@ export async function updateEmployee(
   return data;
 }
 
+export async function selfUpdateEmployee(id: string, payload: SelfUpdatePayload): Promise<Employee> {
+  const { data } = await api.patch<Employee>(`/hr/employees/${id}/self`, payload);
+  return data;
+}
+
 export async function deactivateEmployee(id: string): Promise<void> {
   await api.patch(`/hr/employees/${id}/deactivate`);
 }
 
 export async function getBranches(): Promise<Branch[]> {
   const { data } = await api.get<Branch[]>('/hr/branches');
+  return data;
+}
+
+export async function getProposals(status?: string): Promise<EmployeeProposal[]> {
+  const { data } = await api.get<EmployeeProposal[]>('/hr/proposals', { params: status ? { status } : {} });
+  return data;
+}
+
+export async function createProposal(payload: CreateProposalPayload): Promise<EmployeeProposal> {
+  const { data } = await api.post<EmployeeProposal>('/hr/proposals', payload);
+  return data;
+}
+
+export async function approveProposal(id: string, reviewerNote?: string): Promise<EmployeeProposal> {
+  const { data } = await api.patch<EmployeeProposal>(`/hr/proposals/${id}/approve`, { reviewerNote });
+  return data;
+}
+
+export async function rejectProposal(id: string, reviewerNote?: string): Promise<EmployeeProposal> {
+  const { data } = await api.patch<EmployeeProposal>(`/hr/proposals/${id}/reject`, { reviewerNote });
   return data;
 }

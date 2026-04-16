@@ -1,4 +1,4 @@
-export type EmployeeStatus = 'active' | 'inactive' | 'terminated';
+export type EmployeeStatus = 'ACTIVE' | 'RESIGNED' | 'inactive';
 
 export interface Branch {
   branchId: string;
@@ -11,11 +11,15 @@ export interface Employee {
   employeeId: string;
   fullName: string;
   dateOfBirth: string;
+  gender?: string;
   idCard: string;
-  phoneNumber: string;
+  email?: string;
+  phoneNumber?: string;
+  address?: string;
   bankAccount?: string;
   position: string;
-  status: EmployeeStatus;
+  department?: string;
+  status: string;
   branchId: string;
   branchName: string;
   createdAt: string;
@@ -24,7 +28,7 @@ export interface Employee {
 export interface EmployeeFilters {
   search?: string;
   branchId?: string;
-  status?: EmployeeStatus;
+  status?: string;
   page?: number;
   pageSize?: number;
 }
@@ -32,11 +36,44 @@ export interface EmployeeFilters {
 export interface CreateEmployeePayload {
   fullName: string;
   dateOfBirth: string;
+  gender?: string;
   idCard: string;
-  phoneNumber: string;
+  email?: string;
+  phoneNumber?: string;
+  address?: string;
   bankAccount?: string;
   position: string;
+  department?: string;
   branchId: string;
 }
 
+export interface SelfUpdatePayload {
+  phoneNumber?: string;
+  address?: string;
+  bankAccount?: string;
+}
+
 export type UpdateEmployeePayload = Partial<CreateEmployeePayload>;
+
+export interface EmployeeProposal {
+  proposalId: string;
+  employeeId: string;
+  employeeName: string;
+  proposedBy: string;
+  proposedByName: string;
+  proposedPosition: string;
+  proposedDepartment: string;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewerNote: string;
+  createdAt: string;
+}
+
+export interface CreateProposalPayload {
+  employeeId: string;
+  proposedBy: string;
+  proposedByName: string;
+  proposedPosition?: string;
+  proposedDepartment?: string;
+  reason: string;
+}

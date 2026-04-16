@@ -10,4 +10,6 @@ public interface IEmployeeService {
 
     // Nghiệp vụ: Đổi trạng thái nhân viên thành "Nghỉ việc" thay vì xóa hẳn
     void resignEmployee(String id);
+    Employee selfUpdate(String id, String phoneNumber, String address, String bankAccount);
+    List<Employee> getEmployeesByBranch(String branchId);
 }
