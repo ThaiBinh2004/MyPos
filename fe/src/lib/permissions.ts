@@ -1,17 +1,19 @@
 export type AppRole = string;
 
 // Nhóm quyền
-export const MANAGER_ROLES = ['director', 'ADMIN', 'branch_manager'];
-export const FINANCE_ROLES = ['director', 'ADMIN', 'branch_manager', 'accountant'];
-export const ALL_ROLES = ['director', 'ADMIN', 'branch_manager', 'accountant', 'employee'];
+export const MANAGER_ROLES   = ['director', 'ADMIN', 'branch_manager'];
+export const FINANCE_ROLES   = ['director', 'ADMIN', 'branch_manager', 'accountant'];
+export const HR_ROLES        = ['director', 'ADMIN', 'branch_manager', 'hr'];
+// branch_manager cần xem ứng viên để nhập điểm PV
+export const ALL_ROLES       = ['director', 'ADMIN', 'branch_manager', 'accountant', 'hr', 'employee'];
 
 // Trang nào cho role nào
 export const ROUTE_ROLES: Record<string, string[]> = {
   '/hr':                    ALL_ROLES,
   '/hr/employees':          MANAGER_ROLES,
   '/hr/contracts':          FINANCE_ROLES,
-  '/hr/recruitment':        MANAGER_ROLES,
-  '/hr/attendance':         [...MANAGER_ROLES, 'employee'],
+  '/hr/recruitment':        HR_ROLES,
+  '/hr/attendance':         [...MANAGER_ROLES, 'hr', 'employee'],
   '/hr/attendance/kiosk':   ALL_ROLES,
   '/hr/payroll':            FINANCE_ROLES,
   '/hr/assets':             MANAGER_ROLES,
@@ -24,7 +26,6 @@ export const ROUTE_ROLES: Record<string, string[]> = {
 };
 
 export function canAccessRoute(role: AppRole, path: string): boolean {
-  // Tìm route match dài nhất
   const matched = Object.keys(ROUTE_ROLES)
     .filter((r) => path === r || path.startsWith(r + '/'))
     .sort((a, b) => b.length - a.length)[0];
@@ -33,6 +34,8 @@ export function canAccessRoute(role: AppRole, path: string): boolean {
 }
 
 // Helpers
-export const isManager  = (role: AppRole) => MANAGER_ROLES.includes(role);
-export const isFinance  = (role: AppRole) => FINANCE_ROLES.includes(role);
-export const isAdmin    = (role: AppRole) => ['director', 'ADMIN'].includes(role);
+export const isManager       = (role: AppRole) => MANAGER_ROLES.includes(role);
+export const isFinance       = (role: AppRole) => FINANCE_ROLES.includes(role);
+export const isAdmin         = (role: AppRole) => ['director', 'ADMIN'].includes(role);
+export const isBranchManager = (role: AppRole) => role === 'branch_manager';
+export const isHR            = (role: AppRole) => role === 'hr';

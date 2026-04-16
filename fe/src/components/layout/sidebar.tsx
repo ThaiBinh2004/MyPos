@@ -8,14 +8,14 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
-import { MANAGER_ROLES, FINANCE_ROLES, ALL_ROLES } from '@/lib/permissions';
+import { MANAGER_ROLES, FINANCE_ROLES, HR_ROLES, ALL_ROLES } from '@/lib/permissions';
 
 const hrNav = [
   { label: 'Dashboard',  href: '/hr',                  icon: Home,       roles: ALL_ROLES },
   { label: 'Nhân viên',  href: '/hr/employees',         icon: Users,      roles: MANAGER_ROLES },
   { label: 'Hợp đồng',  href: '/hr/contracts',          icon: FileText,   roles: FINANCE_ROLES },
-  { label: 'Tuyển dụng', href: '/hr/recruitment',       icon: UserPlus,   roles: MANAGER_ROLES },
-  { label: 'Chấm công',  href: '/hr/attendance',        icon: Clock,      roles: [...MANAGER_ROLES, 'employee'] },
+  { label: 'Tuyển dụng', href: '/hr/recruitment',       icon: UserPlus,   roles: HR_ROLES },
+  { label: 'Chấm công',  href: '/hr/attendance',        icon: Clock,      roles: [...MANAGER_ROLES, 'hr', 'employee'] },
   { label: 'Kiosk',      href: '/hr/attendance/kiosk',  icon: Monitor,    roles: ALL_ROLES },
   { label: 'Lương',      href: '/hr/payroll',           icon: DollarSign, roles: FINANCE_ROLES },
   { label: 'Tài sản',    href: '/hr/assets',            icon: Package,    roles: MANAGER_ROLES },
@@ -75,7 +75,7 @@ export function Sidebar() {
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-500 shadow-md shadow-indigo-500/40">
           <span className="text-xs font-bold text-white">F</span>
         </div>
-        <span className="text-sm font-bold text-white tracking-wide">FORHER ERP</span>
+        <span className="text-sm font-bold text-white tracking-wide">FORHER</span>
       </div>
 
       {/* Nav */}
@@ -86,7 +86,7 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="border-t border-white/5 px-4 py-3">
-        <p className="text-[10px] text-slate-600">v1.0.0 · FORHER ERP</p>
+        <p className="text-[10px] text-slate-600">v1.0.0 · FORHER</p>
       </div>
     </aside>
   );

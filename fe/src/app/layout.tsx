@@ -3,7 +3,7 @@ import { Providers } from '@/components/providers';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'FORHER HRM',
+  title: 'FORHER',
   description: 'Hệ thống quản lý nhân sự FORHER',
 };
 

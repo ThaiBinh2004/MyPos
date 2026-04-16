@@ -56,7 +56,7 @@ export default function LoginPage() {
             <span className="text-2xl font-bold text-white">F</span>
           </div>
           <div className="text-center">
-            <h1 className="text-xl font-bold text-slate-900">FORHER ERP</h1>
+            <h1 className="text-xl font-bold text-slate-900">FORHER</h1>
             <p className="text-sm text-slate-400">Hệ thống quản lý doanh nghiệp</p>
           </div>
         </div>

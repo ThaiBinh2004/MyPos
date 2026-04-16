@@ -29,6 +29,7 @@ export function Header() {
     accountant: 'Kế toán',
     employee: 'Nhân viên',
     ADMIN: 'Quản trị viên',
+    hr: 'HR',
   };
 
   return (
