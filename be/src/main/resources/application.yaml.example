@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: erp-backend
+
+  datasource:
+    url: jdbc:oracle:thin:@localhost:1521/XEPDB1
+    username: forher
+    password: forher123
+    driver-class-name: oracle.jdbc.OracleDriver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.OracleDialect
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: YOUR_GMAIL
+    password: YOUR_APP_PASSWORD
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  jackson:
+    serialization:
+      fail-on-empty-beans: false
+
+server:
+  port: 8080
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
