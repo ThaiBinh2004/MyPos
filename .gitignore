@@ -54,6 +54,9 @@ web_modules/
 .env.*
 !.env.example
 
+# BE secrets
+be/src/main/resources/application.yaml
+
 # Next.js
 .next
 fe/.next/
