@@ -51,6 +51,11 @@ public class Employee {
     @Column(name = "default_shift", length = 20)
     private String defaultShift;
 
+    // Số người phụ thuộc (giảm trừ gia cảnh TNCN: 4.4tr/người)
+    @Column(name = "dependents")
+    @Builder.Default
+    private Integer dependents = 0;
+
     @Column(name = "status", length = 20, nullable = false)
     @Builder.Default
     private String status = "ACTIVE";

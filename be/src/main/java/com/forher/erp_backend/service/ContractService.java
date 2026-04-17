@@ -25,9 +25,9 @@ public class ContractService implements IContractService {
     @Override
     public List<Contract> getAllContracts(String branchId, String status) {
         if (branchId != null && status != null)
-            return contractRepository.findByEmployeeBranchBranchIdAndStatusOrderByStartDateDesc(branchId, status.toUpperCase());
+            return contractRepository.findByBranchAndStatusExcludingDirectors(branchId, status.toUpperCase());
         if (branchId != null)
-            return contractRepository.findByEmployeeBranchBranchIdOrderByStartDateDesc(branchId);
+            return contractRepository.findByBranchExcludingDirectors(branchId);
         if (status != null)
             return contractRepository.findByStatusOrderByStartDateDesc(status.toUpperCase());
         return contractRepository.findAll();

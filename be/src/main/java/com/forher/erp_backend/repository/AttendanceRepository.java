@@ -25,6 +25,12 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     @Query("SELECT a FROM Attendance a WHERE a.dateWork = :dateWork AND a.checkOutTime IS NULL AND a.checkInTime IS NOT NULL")
     List<Attendance> findCheckedInWithoutCheckout(@Param("dateWork") LocalDate dateWork);
 
+    @Query("SELECT a FROM Attendance a WHERE a.employee.employeeId = :employeeId" +
+           " AND a.dateWork >= :from AND a.dateWork <= :to")
+    List<Attendance> findByEmployeeAndDateRange(@Param("employeeId") String employeeId,
+                                                @Param("from") LocalDate from,
+                                                @Param("to") LocalDate to);
+
     @Query("SELECT a FROM Attendance a WHERE (:branchId IS NULL OR a.employee.branch.branchId = :branchId)" +
            " AND (:search IS NULL OR LOWER(a.employee.employeeId) LIKE LOWER(CONCAT('%', :search, '%'))" +
            "   OR :search IS NULL OR LOWER(a.employee.fullName) LIKE LOWER(CONCAT('%', :search, '%')))" +

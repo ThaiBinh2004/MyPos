@@ -4,21 +4,22 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Users, FileText, UserPlus, Clock, DollarSign, Package,
-  ShoppingCart, BarChart2, Boxes, Truck, ClipboardList, Home, Tag, Monitor,
+  ShoppingCart, BarChart2, Boxes, Truck, ClipboardList, Home, Tag, Monitor, PieChart,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
 import { MANAGER_ROLES, FINANCE_ROLES, HR_ROLES, ALL_ROLES } from '@/lib/permissions';
 
 const hrNav = [
-  { label: 'Dashboard',  href: '/hr',                  icon: Home,       roles: ALL_ROLES },
   { label: 'Nhân viên',  href: '/hr/employees',         icon: Users,      roles: MANAGER_ROLES },
   { label: 'Hợp đồng',  href: '/hr/contracts',          icon: FileText,   roles: FINANCE_ROLES },
   { label: 'Tuyển dụng', href: '/hr/recruitment',       icon: UserPlus,   roles: HR_ROLES },
   { label: 'Chấm công',  href: '/hr/attendance',        icon: Clock,      roles: [...MANAGER_ROLES, 'hr', 'employee'] },
   { label: 'Kiosk',      href: '/hr/attendance/kiosk',  icon: Monitor,    roles: ALL_ROLES },
   { label: 'Lương',      href: '/hr/payroll',           icon: DollarSign, roles: FINANCE_ROLES },
+  { label: 'Phiếu lương', href: '/hr/payroll/my',      icon: DollarSign, roles: ['employee', 'hr'] },
   { label: 'Tài sản',    href: '/hr/assets',            icon: Package,    roles: MANAGER_ROLES },
+  { label: 'Báo cáo',   href: '/hr/reports',           icon: PieChart,   roles: ['director'] },
 ];
 
 const salesNav = [

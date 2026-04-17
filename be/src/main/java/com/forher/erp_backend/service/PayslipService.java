@@ -36,7 +36,7 @@ public class PayslipService implements IPayslipService {
                     .payroll(payroll)
                     .issueDate(LocalDate.now())
                     .netAmount(payroll.getNetSalary())
-                    .salaryDetail("{\"month\":" + payroll.getMonthNum() + ",\"year\":" + payroll.getYearNum() + "}")
+                    .salaryDetail("{\"month\":\"" + payroll.getMonth() + "\"}")
                     .build();
             payslipRepository.save(payslip);
         }

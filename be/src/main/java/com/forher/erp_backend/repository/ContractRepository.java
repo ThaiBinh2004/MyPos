@@ -20,6 +20,12 @@ public interface ContractRepository extends JpaRepository<Contract, String> {
 
     List<Contract> findByEmployeeBranchBranchIdAndStatusOrderByStartDateDesc(String branchId, String status);
 
+    @Query("SELECT c FROM Contract c WHERE c.employee.branch.branchId = :branchId AND c.employee.employeeId NOT IN (SELECT ua.employee.employeeId FROM UserAccount ua WHERE ua.role = 'director') ORDER BY c.startDate DESC")
+    List<Contract> findByBranchExcludingDirectors(@Param("branchId") String branchId);
+
+    @Query("SELECT c FROM Contract c WHERE c.employee.branch.branchId = :branchId AND c.status = :status AND c.employee.employeeId NOT IN (SELECT ua.employee.employeeId FROM UserAccount ua WHERE ua.role = 'director') ORDER BY c.startDate DESC")
+    List<Contract> findByBranchAndStatusExcludingDirectors(@Param("branchId") String branchId, @Param("status") String status);
+
     @Query("SELECT c FROM Contract c WHERE c.status = 'ACTIVE' AND c.endDate IS NOT NULL AND c.endDate <= :threshold ORDER BY c.endDate ASC")
     List<Contract> findExpiringContracts(@Param("threshold") LocalDate threshold);
 
