@@ -21,9 +21,9 @@ export const ROUTE_ROLES: Record<string, string[]> = {
   '/hr/reports':            ['director'],
   '/sales/orders':          [...MANAGER_ROLES, 'employee'],
   '/sales/customers':       [...MANAGER_ROLES, 'employee'],
-  '/sales/products':        MANAGER_ROLES,
+  '/sales/products':        [...MANAGER_ROLES, 'employee'],
   '/sales/categories':      ['director', 'ADMIN'],
-  '/sales/inventory':       MANAGER_ROLES,
+  '/sales/inventory':       [...MANAGER_ROLES, 'employee'],
   '/sales/suppliers':       MANAGER_ROLES,
   '/sales/reports':         FINANCE_ROLES,
 };

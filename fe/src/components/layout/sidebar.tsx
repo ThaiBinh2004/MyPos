@@ -27,9 +27,9 @@ const salesNav = [
   { label: 'Bán tại quầy',  href: '/sales/pos',        icon: Store,        roles: [...MANAGER_ROLES, 'employee'] },
   { label: 'Đơn hàng',      href: '/sales/orders',     icon: ShoppingCart, roles: [...MANAGER_ROLES, 'employee'] },
   { label: 'Khách hàng',    href: '/sales/customers',  icon: Users,        roles: [...MANAGER_ROLES, 'employee'] },
-  { label: 'Sản phẩm',      href: '/sales/products',   icon: Boxes,        roles: MANAGER_ROLES },
+  { label: 'Sản phẩm',      href: '/sales/products',   icon: Boxes,        roles: [...MANAGER_ROLES, 'employee'] },
   { label: 'Danh mục',      href: '/sales/categories', icon: Tag,          roles: ['director', 'ADMIN'] },
-  { label: 'Kho hàng',      href: '/sales/inventory',  icon: ClipboardList,roles: MANAGER_ROLES },
+  { label: 'Kho hàng',      href: '/sales/inventory',  icon: ClipboardList,roles: [...MANAGER_ROLES, 'employee'] },
   { label: 'Nhà cung cấp',  href: '/sales/suppliers',  icon: Truck,        roles: MANAGER_ROLES },
   { label: 'Báo cáo',       href: '/sales/reports',    icon: BarChart2,    roles: FINANCE_ROLES },
 ];
