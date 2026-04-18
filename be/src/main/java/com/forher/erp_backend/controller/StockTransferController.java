@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -85,18 +86,18 @@ public class StockTransferController {
     }
 
     private Map<String, Object> toMap(StockTransfer t) {
-        return Map.of(
-                "transferId", t.getTransferId(),
-                "fromBranchId", t.getFromBranch().getBranchId(),
-                "fromBranchName", t.getFromBranch().getBranchName(),
-                "toBranchId", t.getToBranch().getBranchId(),
-                "toBranchName", t.getToBranch().getBranchName(),
-                "productId", t.getProduct().getProductId(),
-                "productName", t.getProduct().getProductName(),
-                "quantity", t.getQuantity(),
-                "status", t.getStatus(),
-                "note", t.getNote() != null ? t.getNote() : "",
-                "createdAt", t.getCreatedAt() != null ? t.getCreatedAt().toString() : ""
-        );
+        Map<String, Object> m = new HashMap<>();
+        m.put("transferId", t.getTransferId());
+        m.put("fromBranchId", t.getFromBranch().getBranchId());
+        m.put("fromBranchName", t.getFromBranch().getBranchName());
+        m.put("toBranchId", t.getToBranch().getBranchId());
+        m.put("toBranchName", t.getToBranch().getBranchName());
+        m.put("productId", t.getProduct().getProductId());
+        m.put("productName", t.getProduct().getProductName());
+        m.put("quantity", t.getQuantity());
+        m.put("status", t.getStatus());
+        m.put("note", t.getNote() != null ? t.getNote() : "");
+        m.put("createdAt", t.getCreatedAt() != null ? t.getCreatedAt().toString() : "");
+        return m;
     }
 }
