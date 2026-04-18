@@ -197,3 +197,30 @@ export interface CreateCustomerPayload {
   phoneNumber: string;
   email?: string;
 }
+
+export interface Promotion {
+  promotionId: string;
+  name: string;
+  code?: string;
+  discountType: 'PERCENT' | 'FIXED';
+  discountValue: number;
+  minOrderAmount: number;
+  maxDiscountAmount?: number;
+  startDate?: string;
+  endDate?: string;
+  active: boolean;
+  description?: string;
+  createdAt: string;
+}
+
+export interface CreatePromotionPayload {
+  name: string;
+  code?: string;
+  discountType: 'PERCENT' | 'FIXED';
+  discountValue: number;
+  minOrderAmount?: number;
+  maxDiscountAmount?: number;
+  startDate?: string;
+  endDate?: string;
+  description?: string;
+}

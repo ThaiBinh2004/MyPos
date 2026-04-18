@@ -101,6 +101,39 @@ export async function createProduct(payload: CreateProductPayload): Promise<Prod
   return data;
 }
 
+export async function updateProduct(id: string, payload: Partial<CreateProductPayload & { status: string }>): Promise<Product> {
+  const { data } = await api.patch<Product>(`/sales/products/${id}`, payload);
+  return data;
+}
+
+export async function deleteProduct(id: string): Promise<void> {
+  await api.delete(`/sales/products/${id}`);
+}
+
+export async function getCustomerOrders(customerId: string): Promise<import('@/types').Order[]> {
+  const { data } = await api.get<import('@/types').Order[]>(`/sales/customers/${customerId}/orders`);
+  return data;
+}
+
+export async function getPromotions(): Promise<Promotion[]> {
+  const { data } = await api.get<Promotion[]>('/sales/promotions');
+  return data;
+}
+
+export async function createPromotion(payload: CreatePromotionPayload): Promise<Promotion> {
+  const { data } = await api.post<Promotion>('/sales/promotions', payload);
+  return data;
+}
+
+export async function updatePromotion(id: string, payload: Partial<CreatePromotionPayload & { active: boolean }>): Promise<Promotion> {
+  const { data } = await api.patch<Promotion>(`/sales/promotions/${id}`, payload);
+  return data;
+}
+
+export async function deletePromotion(id: string): Promise<void> {
+  await api.delete(`/sales/promotions/${id}`);
+}
+
 export async function getInventory(
   filters?: InventoryFilters
 ): Promise<PaginatedResponse<Inventory>> {
