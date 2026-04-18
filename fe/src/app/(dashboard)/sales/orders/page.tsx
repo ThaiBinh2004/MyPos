@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Modal } from "@/components/ui/modal";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import React from "react";
 import {
   ChevronDown, ChevronUp, Truck, CheckCircle, XCircle,
   Package, Plus, Search, UserSearch, UserPlus, Trash2,
@@ -192,8 +193,8 @@ export default function OrdersPage() {
                 const isExpanded = expanded === order.orderId;
 
                 return (
-                  <>
-                    <TableRow key={order.orderId} className="cursor-pointer hover:bg-gray-50"
+                  <React.Fragment key={order.orderId}>
+                    <TableRow className="cursor-pointer hover:bg-gray-50"
                       onClick={() => setExpanded(isExpanded ? null : order.orderId)}>
                       <TableTd>
                         <div className="flex items-center gap-1">
@@ -235,7 +236,7 @@ export default function OrdersPage() {
                     </TableRow>
 
                     {isExpanded && (
-                      <TableRow key={`${order.orderId}-detail`}>
+                      <TableRow>
                         <TableTd colSpan={8} className="bg-gray-50 p-0">
                           <div className="px-6 py-3 space-y-2">
                             {order.shippingAddress && (
@@ -277,7 +278,7 @@ export default function OrdersPage() {
                         </TableTd>
                       </TableRow>
                     )}
-                  </>
+                  </React.Fragment>
                 );
               })}
             </TableBody>
