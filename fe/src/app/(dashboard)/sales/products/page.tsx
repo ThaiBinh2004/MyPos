@@ -22,7 +22,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { isManager } from "@/lib/permissions";
 import { useAuth } from "@/contexts/auth-context";
-import { Pencil, Trash2, Plus, Upload, X } from "lucide-react";
+import { Pencil, Trash2, Plus, Upload, X, ToggleLeft, ToggleRight } from "lucide-react";
 
 const STATUS_OPTIONS = [
   { value: "", label: "Tất cả" },
