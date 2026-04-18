@@ -9,6 +9,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/sales/products")
@@ -54,5 +62,21 @@ public class ProductController {
     public ResponseEntity<?> delete(@PathVariable String id) {
         try { productService.deleteProduct(id); return ResponseEntity.ok("Đã xóa sản phẩm."); }
         catch (RuntimeException e) { return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage()); }
+    }
+
+    @PostMapping("/upload")
+    public ResponseEntity<?> uploadImage(@RequestParam MultipartFile file) {
+        try {
+            String ext = file.getOriginalFilename() != null && file.getOriginalFilename().contains(".")
+                    ? file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."))
+                    : ".jpg";
+            String filename = UUID.randomUUID() + ext;
+            Path dir = Paths.get("uploads/products");
+            Files.createDirectories(dir);
+            Files.copy(file.getInputStream(), dir.resolve(filename));
+            return ResponseEntity.ok(Map.of("url", "/products/" + filename));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Upload thất bại: " + e.getMessage());
+        }
     }
 }

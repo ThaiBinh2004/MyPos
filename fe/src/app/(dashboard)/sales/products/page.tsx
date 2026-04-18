@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,6 +8,7 @@ import { z } from "zod";
 import {
   getProducts, createProduct, updateProduct, deleteProduct,
   getCategories, getPromotions, createPromotion, updatePromotion, deletePromotion,
+  uploadProductImage,
 } from "@/services/sales.service";
 import type { Product, ProductFilters, Promotion, CreatePromotionPayload } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,7 +22,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { isManager } from "@/lib/permissions";
 import { useAuth } from "@/contexts/auth-context";
-import { Pencil, Trash2, Tag, ToggleLeft, ToggleRight, Plus } from "lucide-react";
+import { Pencil, Trash2, ToggleLeft, ToggleRight, Plus, Upload, X } from "lucide-react";
 
 const STATUS_OPTIONS = [
   { value: "", label: "Tất cả" },
@@ -67,6 +68,10 @@ export default function ProductsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [showCreate, setShowCreate] = useState(false);
 
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Promo modals
   const [editPromo, setEditPromo] = useState<Promotion | null>(null);
   const [deletePromoTarget, setDeletePromoTarget] = useState<Promotion | null>(null);
@@ -93,11 +98,11 @@ export default function ProductsPage() {
   // Product mutations
   const createMut = useMutation({
     mutationFn: createProduct,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["products"] }); setShowCreate(false); resetP(); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["products"] }); setShowCreate(false); setImagePreview(""); resetP(); },
   });
   const updateMut = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: Partial<ProductForm> }) => updateProduct(id, payload),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["products"] }); setEditProduct(null); resetP(); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["products"] }); setEditProduct(null); setImagePreview(""); resetP(); },
   });
   const toggleMut = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) => updateProduct(id, { status }),
@@ -132,6 +137,19 @@ export default function ProductsPage() {
     svP("price", p.price); svP("categoryId", p.categoryId);
     svP("sizeInfo", p.sizeInfo ?? ""); svP("color", p.color ?? "");
     svP("imageUrl", p.imageUrl ?? "");
+    setImagePreview(p.imageUrl ?? "");
+  }
+
+  async function handleImageFile(file: File) {
+    const localUrl = URL.createObjectURL(file);
+    setImagePreview(localUrl);
+    setUploading(true);
+    try {
+      const url = await uploadProductImage(file);
+      svP("imageUrl", `http://localhost:8080${url}`);
+    } finally {
+      setUploading(false);
+    }
   }
 
   function openEditPromo(p: Promotion) {
@@ -166,7 +184,7 @@ export default function ProductsPage() {
           </button>
         </div>
         {manager && tab === 'products' && (
-          <Button onClick={() => { setShowCreate(true); resetP(); }}><Plus size={14} /> Thêm sản phẩm</Button>
+          <Button onClick={() => { setShowCreate(true); setImagePreview(""); resetP(); }}><Plus size={14} /> Thêm sản phẩm</Button>
         )}
         {manager && tab === 'promotions' && (
           <Button onClick={() => { setShowCreatePromo(true); resetPr(); }}><Plus size={14} /> Tạo khuyến mãi</Button>
@@ -324,9 +342,32 @@ export default function ProductsPage() {
               <Input label="Size" {...regP("sizeInfo")} />
               <Input label="Màu sắc" {...regP("color")} />
             </div>
-            <Input label="URL hình ảnh" placeholder="https://..." {...regP("imageUrl")} error={errP.imageUrl?.message} />
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Hình ảnh</label>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
+                onChange={e => e.target.files?.[0] && handleImageFile(e.target.files[0])} />
+              {imagePreview ? (
+                <div className="relative w-full h-36 rounded-lg overflow-hidden border border-gray-200 group">
+                  <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
+                  <button type="button"
+                    onClick={() => { setImagePreview(""); svP("imageUrl", ""); }}
+                    className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <X size={12} />
+                  </button>
+                  {uploading && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center text-white text-xs">Đang tải lên...</div>
+                  )}
+                </div>
+              ) : (
+                <button type="button" onClick={() => fileInputRef.current?.click()}
+                  className="w-full h-24 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-indigo-300 hover:text-indigo-400 transition-colors">
+                  <Upload size={20} />
+                  <span className="text-xs">Click để chọn ảnh</span>
+                </button>
+              )}
+            </div>
             <div className="flex justify-end gap-2 pt-1">
-              <Button type="button" variant="ghost" onClick={() => { setShowCreate(false); setEditProduct(null); resetP(); }}>Hủy</Button>
+              <Button type="button" variant="ghost" onClick={() => { setShowCreate(false); setEditProduct(null); setImagePreview(""); resetP(); }}>Hủy</Button>
               <Button type="submit" loading={createMut.isPending || updateMut.isPending}>
                 {editProduct ? "Cập nhật" : "Tạo"}
               </Button>

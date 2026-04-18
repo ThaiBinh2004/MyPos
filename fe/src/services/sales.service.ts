@@ -219,3 +219,12 @@ export async function resolveStockAudit(id: string, resolvedNote: string): Promi
   const { data } = await api.patch(`/sales/stock-audits/${id}/resolve`, { resolvedNote });
   return data;
 }
+
+export async function uploadProductImage(file: File): Promise<string> {
+  const form = new FormData();
+  form.append('file', file);
+  const { data } = await api.post<{ url: string }>('/sales/products/upload', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data.url;
+}

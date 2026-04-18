@@ -18,6 +18,8 @@ import {
 interface CartItem {
   product: Product;
   quantity: number;
+  selectedSize?: string;
+  selectedColor?: string;
 }
 
 const LOYALTY_RATE = 1000; // 1 điểm = 1,000 VND
@@ -41,6 +43,11 @@ export default function PosPage() {
   // Payment
   const [paymentMethod, setPaymentMethod] = useState<"CASH" | "TRANSFER" | "CARD">("CASH");
   const [note, setNote] = useState("");
+
+  // Size/color picker
+  const [pickerProduct, setPickerProduct] = useState<Product | null>(null);
+  const [pickedSize, setPickedSize] = useState("");
+  const [pickedColor, setPickedColor] = useState("");
 
   // Bill modal
   const [billOrder, setBillOrder] = useState<null | {
@@ -96,22 +103,44 @@ export default function PosPage() {
   });
 
   // Cart helpers
-  const addToCart = (product: Product) => {
+  const openPicker = (product: Product) => {
+    const sizes = product.sizeInfo ? product.sizeInfo.split("/").map(s => s.trim()).filter(Boolean) : [];
+    if (sizes.length <= 1 && !product.color) {
+      addToCartDirect(product, sizes[0] ?? "", product.color ?? "");
+    } else {
+      setPickerProduct(product);
+      setPickedSize(sizes[0] ?? "");
+      setPickedColor(product.color ?? "");
+    }
+  };
+
+  const addToCartDirect = (product: Product, size: string, color: string) => {
     setCart(prev => {
-      const existing = prev.find(i => i.product.productId === product.productId);
-      if (existing) return prev.map(i => i.product.productId === product.productId ? { ...i, quantity: i.quantity + 1 } : i);
-      return [...prev, { product, quantity: 1 }];
+      const key = `${product.productId}-${size}-${color}`;
+      const existing = prev.find(i => `${i.product.productId}-${i.selectedSize}-${i.selectedColor}` === key);
+      if (existing) return prev.map(i =>
+        `${i.product.productId}-${i.selectedSize}-${i.selectedColor}` === key ? { ...i, quantity: i.quantity + 1 } : i
+      );
+      return [...prev, { product, quantity: 1, selectedSize: size, selectedColor: color }];
     });
   };
 
-  const updateQty = (productId: string, delta: number) => {
+  const confirmPicker = () => {
+    if (!pickerProduct) return;
+    addToCartDirect(pickerProduct, pickedSize, pickedColor);
+    setPickerProduct(null);
+  };
+
+  const updateQty = (key: string, delta: number) => {
     setCart(prev => prev
-      .map(i => i.product.productId === productId ? { ...i, quantity: i.quantity + delta } : i)
+      .map(i => cartKey(i) === key ? { ...i, quantity: i.quantity + delta } : i)
       .filter(i => i.quantity > 0)
     );
   };
 
-  const removeFromCart = (productId: string) => setCart(prev => prev.filter(i => i.product.productId !== productId));
+  const removeFromCart = (key: string) => setCart(prev => prev.filter(i => cartKey(i) !== key));
+
+  const cartKey = (i: CartItem) => `${i.product.productId}-${i.selectedSize}-${i.selectedColor}`;
 
   // Totals
   const subtotal = cart.reduce((s, i) => s + i.product.price * i.quantity, 0);
@@ -186,7 +215,7 @@ export default function PosPage() {
           {products.map(p => (
             <button
               key={p.productId}
-              onClick={() => addToCart(p)}
+              onClick={() => openPicker(p)}
               className="flex flex-col items-start p-3 rounded-xl border border-gray-100 bg-white hover:border-indigo-300 hover:shadow-sm transition-all text-left group"
             >
               {p.imageUrl
@@ -243,22 +272,25 @@ export default function PosPage() {
             </div>
           )}
           {cart.map(item => (
-            <div key={item.product.productId} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50">
+            <div key={cartKey(item)} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50">
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-gray-800 truncate">{item.product.productName}</p>
+                <p className="text-[10px] text-gray-400">
+                  {[item.selectedSize, item.selectedColor].filter(Boolean).join(" · ")}
+                </p>
                 <p className="text-xs text-indigo-600 font-semibold">{formatCurrency(item.product.price)}</p>
               </div>
               <div className="flex items-center gap-1">
-                <button onClick={() => updateQty(item.product.productId, -1)} className="w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
+                <button onClick={() => updateQty(cartKey(item), -1)} className="w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
                   <Minus size={10} />
                 </button>
                 <span className="w-6 text-center text-sm font-semibold">{item.quantity}</span>
-                <button onClick={() => updateQty(item.product.productId, 1)} className="w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
+                <button onClick={() => updateQty(cartKey(item), 1)} className="w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
                   <Plus size={10} />
                 </button>
               </div>
               <p className="text-xs font-bold text-gray-700 w-20 text-right">{formatCurrency(item.product.price * item.quantity)}</p>
-              <button onClick={() => removeFromCart(item.product.productId)} className="text-gray-300 hover:text-red-400">
+              <button onClick={() => removeFromCart(cartKey(item))} className="text-gray-300 hover:text-red-400">
                 <Trash2 size={13} />
               </button>
             </div>
@@ -361,6 +393,62 @@ export default function PosPage() {
             </Button>
           </div>
         </div>
+      </Modal>
+
+      {/* Size / Color Picker Modal */}
+      <Modal open={!!pickerProduct} onClose={() => setPickerProduct(null)} title="Chọn phân loại">
+        {pickerProduct && (() => {
+          const sizes = pickerProduct.sizeInfo ? pickerProduct.sizeInfo.split("/").map(s => s.trim()).filter(Boolean) : [];
+          const colors = pickerProduct.color ? pickerProduct.color.split("/").map(c => c.trim()).filter(Boolean) : [];
+          return (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                {pickerProduct.imageUrl
+                  ? <img src={pickerProduct.imageUrl} alt={pickerProduct.productName} className="w-16 h-16 object-cover rounded-lg" />
+                  : <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center text-2xl">👗</div>
+                }
+                <div>
+                  <p className="font-semibold text-gray-800">{pickerProduct.productName}</p>
+                  <p className="text-indigo-600 font-bold">{formatCurrency(pickerProduct.price)}</p>
+                </div>
+              </div>
+              {sizes.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-2">Size</p>
+                  <div className="flex flex-wrap gap-2">
+                    {sizes.map(s => (
+                      <button key={s} onClick={() => setPickedSize(s)}
+                        className={`px-4 py-1.5 rounded-lg border text-sm font-medium transition-all ${
+                          pickedSize === s ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-gray-200 text-gray-600 hover:border-indigo-300"
+                        }`}>
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {colors.length > 1 && (
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-2">Màu sắc</p>
+                  <div className="flex flex-wrap gap-2">
+                    {colors.map(c => (
+                      <button key={c} onClick={() => setPickedColor(c)}
+                        className={`px-4 py-1.5 rounded-lg border text-sm font-medium transition-all ${
+                          pickedColor === c ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-gray-200 text-gray-600 hover:border-indigo-300"
+                        }`}>
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="flex justify-end gap-2 pt-1">
+                <Button variant="ghost" onClick={() => setPickerProduct(null)}>Hủy</Button>
+                <Button onClick={confirmPicker}>Thêm vào giỏ</Button>
+              </div>
+            </div>
+          );
+        })()}
       </Modal>
 
       {/* Bill Modal */}
