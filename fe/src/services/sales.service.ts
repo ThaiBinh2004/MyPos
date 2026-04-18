@@ -22,9 +22,11 @@ import type {
 export async function getOrders(
   filters?: OrderFilters
 ): Promise<PaginatedResponse<Order>> {
-  const { data } = await api.get<PaginatedResponse<Order>>('/sales/orders', {
-    params: filters,
-  });
+  const params = filters ? {
+    ...filters,
+    type: filters.orderType ?? filters.type,
+  } : undefined;
+  const { data } = await api.get<PaginatedResponse<Order>>('/sales/orders', { params });
   return data;
 }
 
@@ -43,11 +45,12 @@ export async function updateOrderStatus(id: string, status: string): Promise<Ord
   return data;
 }
 
-export async function getCustomers(search?: string): Promise<Customer[]> {
+export async function getCustomers(phone?: string): Promise<Customer[]> {
   const { data } = await api.get<Customer[]>('/sales/customers', {
-    params: search ? { search } : undefined,
+    params: phone ? { phone } : undefined,
   });
-  return data;
+  if (Array.isArray(data)) return data;
+  return [data as unknown as Customer];
 }
 
 export async function getCustomer(id: string): Promise<Customer> {

@@ -48,14 +48,19 @@ export interface Order {
   orderId: string;
   customerId: string;
   customerName: string;
+  customerPhone?: string;
   branchId: string;
   branchName: string;
   employeeId: string;
   employeeName: string;
   orderType: OrderType;
   totalAmount: number;
+  discountAmount: number;
+  shippingFee: number;
+  loyaltyPointsUsed: number;
   paymentMethod: PaymentMethod;
   shippingAddress?: string;
+  note?: string;
   status: OrderStatus;
   createdAt: string;
   details?: OrderDetail[];
@@ -117,8 +122,9 @@ export interface OrderFilters {
   branchId?: string;
   employeeId?: string;
   customerId?: string;
-  status?: OrderStatus;
-  orderType?: OrderType;
+  status?: string;
+  orderType?: string;
+  type?: string;
   dateFrom?: string;
   dateTo?: string;
   page?: number;
@@ -142,11 +148,15 @@ export interface InventoryFilters {
 }
 
 export interface CreateOrderPayload {
-  customerId: string;
+  customerId?: string;
+  employeeId: string;
   branchId: string;
   orderType: OrderType;
   paymentMethod: PaymentMethod;
   shippingAddress?: string;
+  shippingFee?: number;
+  loyaltyPointsUsed?: number;
+  note?: string;
   details: Array<{
     productId: string;
     quantity: number;

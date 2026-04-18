@@ -45,6 +45,21 @@ public class Orders {
     @Column(name = "shipping_address", length = 255)
     private String shippingAddress;
 
+    @Column(name = "shipping_fee", precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal shippingFee = BigDecimal.ZERO;
+
+    @Column(name = "discount_amount", precision = 15, scale = 2)
+    @Builder.Default
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Column(name = "loyalty_points_used", nullable = false)
+    @Builder.Default
+    private Integer loyaltyPointsUsed = 0;
+
+    @Column(name = "note", length = 500)
+    private String note;
+
     @Column(name = "status", length = 30, nullable = false)
     private String status;
 

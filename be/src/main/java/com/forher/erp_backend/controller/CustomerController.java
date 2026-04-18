@@ -1,6 +1,7 @@
 package com.forher.erp_backend.controller;
 
 import com.forher.erp_backend.entity.Customer;
+import com.forher.erp_backend.repository.CustomerRepository;
 import com.forher.erp_backend.service.Interface.ICustomerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,9 +14,17 @@ import org.springframework.web.bind.annotation.*;
 public class CustomerController {
 
     private final ICustomerService customerService;
+    private final CustomerRepository customerRepo;
 
     @GetMapping
-    public ResponseEntity<?> getAll() { return ResponseEntity.ok(customerService.getAllCustomers()); }
+    public ResponseEntity<?> getAll(@RequestParam(required = false) String phone) {
+        if (phone != null && !phone.isBlank()) {
+            return customerRepo.findByPhoneNumber(phone)
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
+        }
+        return ResponseEntity.ok(customerService.getAllCustomers());
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable String id) {

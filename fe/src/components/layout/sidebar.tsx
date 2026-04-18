@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Users, FileText, UserPlus, Clock, DollarSign, Package,
-  ShoppingCart, BarChart2, Boxes, Truck, ClipboardList, Home, Tag, Monitor, PieChart, LogOut,
+  ShoppingCart, BarChart2, Boxes, Truck, ClipboardList, Home, Tag, Monitor, PieChart, LogOut, Store,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
@@ -24,6 +24,7 @@ const hrNav = [
 ];
 
 const salesNav = [
+  { label: 'Bán tại quầy',  href: '/sales/pos',        icon: Store,        roles: [...MANAGER_ROLES, 'employee'] },
   { label: 'Đơn hàng',      href: '/sales/orders',     icon: ShoppingCart, roles: MANAGER_ROLES },
   { label: 'Sản phẩm',      href: '/sales/products',   icon: Boxes,        roles: MANAGER_ROLES },
   { label: 'Danh mục',      href: '/sales/categories', icon: Tag,          roles: ['director', 'ADMIN'] },
