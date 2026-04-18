@@ -39,7 +39,11 @@ public class CustomerController {
 
     @PostMapping
     public ResponseEntity<?> create(@RequestBody Customer customer) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(customerService.createCustomer(customer));
+        try {
+            return ResponseEntity.status(HttpStatus.CREATED).body(customerService.createCustomer(customer));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @GetMapping("/{id}/orders")

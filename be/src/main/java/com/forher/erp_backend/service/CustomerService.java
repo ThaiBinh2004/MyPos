@@ -26,6 +26,11 @@ public class CustomerService implements ICustomerService {
     @Override
     @Transactional
     public Customer createCustomer(Customer customer) {
+        if (customerRepository.findByPhoneNumber(customer.getPhoneNumber()).isPresent()) {
+            throw new RuntimeException("Số điện thoại đã tồn tại.");
+        }
+        String id = "CUS" + String.format("%05d", customerRepository.count() + 1);
+        customer.setCustomerId(id);
         customer.setLoyaltyPoints(0);
         customer.setCustomerRank("Thường");
         return customerRepository.save(customer);
