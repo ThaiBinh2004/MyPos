@@ -3,6 +3,7 @@ package com.forher.erp_backend.controller;
 import com.forher.erp_backend.dto.PaginatedResponse;
 import com.forher.erp_backend.dto.ProductResponse;
 import com.forher.erp_backend.entity.Product;
+import com.forher.erp_backend.repository.ProductRepository;
 import com.forher.erp_backend.service.Interface.IProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,11 +16,20 @@ import org.springframework.web.bind.annotation.*;
 public class ProductController {
 
     private final IProductService productService;
+    private final ProductRepository productRepository;
 
     @GetMapping
-    public ResponseEntity<?> getAll() {
+    public ResponseEntity<?> getAll(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String categoryId,
+            @RequestParam(required = false) String status) {
+        var products = productRepository.search(
+                (search != null && !search.isBlank()) ? search : null,
+                (categoryId != null && !categoryId.isBlank()) ? categoryId : null,
+                (status != null && !status.isBlank()) ? status : null
+        );
         return ResponseEntity.ok(PaginatedResponse.of(
-                productService.getAllProducts().stream().map(ProductResponse::from).toList()
+                products.stream().map(ProductResponse::from).toList()
         ));
     }
 
