@@ -48,7 +48,8 @@ const STATUS_OPTIONS = [
   ...Object.entries(STATUS_CONFIG).map(([value, { label }]) => ({ value, label })),
 ];
 
-interface OrderLine { product: Product; quantity: number; }
+interface OrderLine { product: Product; quantity: number; selectedSize?: string; selectedColor?: string; }
+const lineKey = (l: OrderLine) => `${l.product.productId}-${l.selectedSize}-${l.selectedColor}`;
 
 export default function OrdersPage() {
   const qc = useQueryClient();
@@ -72,6 +73,9 @@ export default function OrdersPage() {
   const [coShowNewCust, setCoShowNewCust] = useState(false);
   const [coNewName, setCoNewName] = useState('');
   const [coNewPhone, setCoNewPhone] = useState('');
+  const [coPicker, setCoPicker] = useState<Product | null>(null);
+  const [coPickedSize, setCoPickedSize] = useState('');
+  const [coPickedColor, setCoPickedColor] = useState('');
 
   const { data, isLoading } = useQuery({
     queryKey: ['orders', typeFilter, statusFilter],
@@ -116,7 +120,7 @@ export default function OrdersPage() {
     setCoCustomer(null); setCoPhone(''); setCoLines([]);
     setCoProductSearch(''); setCoShipping(''); setCoShippingFee(0);
     setCoPayment('CASH'); setCoNote(''); setCoShowNewCust(false);
-    setCoNewName(''); setCoNewPhone('');
+    setCoNewName(''); setCoNewPhone(''); setCoPicker(null);
   }
 
   async function searchCustomer() {
@@ -130,18 +134,37 @@ export default function OrdersPage() {
     }
   }
 
-  function addLine(p: Product) {
-    setCoLines(prev => {
-      const ex = prev.find(l => l.product.productId === p.productId);
-      if (ex) return prev.map(l => l.product.productId === p.productId ? { ...l, quantity: l.quantity + 1 } : l);
-      return [...prev, { product: p, quantity: 1 }];
-    });
-    setCoProductSearch('');
+  function openPicker(p: Product) {
+    const sizes = p.sizeInfo ? p.sizeInfo.split('/').map(s => s.trim()).filter(Boolean) : [];
+    if (sizes.length <= 1) {
+      addLineDirectly(p, sizes[0] ?? '', p.color ?? '');
+    } else {
+      setCoPicker(p);
+      setCoPickedSize(sizes[0]);
+      setCoPickedColor(p.color ?? '');
+      setCoProductSearch('');
+    }
   }
 
-  function updateLine(id: string, qty: number) {
-    if (qty <= 0) setCoLines(prev => prev.filter(l => l.product.productId !== id));
-    else setCoLines(prev => prev.map(l => l.product.productId === id ? { ...l, quantity: qty } : l));
+  function addLineDirectly(p: Product, size: string, color: string) {
+    const key = `${p.productId}-${size}-${color}`;
+    setCoLines(prev => {
+      const ex = prev.find(l => lineKey(l) === key);
+      if (ex) return prev.map(l => lineKey(l) === key ? { ...l, quantity: l.quantity + 1 } : l);
+      return [...prev, { product: p, quantity: 1, selectedSize: size, selectedColor: color }];
+    });
+    setCoProductSearch('');
+    setCoPicker(null);
+  }
+
+  function confirmPicker() {
+    if (!coPicker) return;
+    addLineDirectly(coPicker, coPickedSize, coPickedColor);
+  }
+
+  function updateLine(key: string, qty: number) {
+    if (qty <= 0) setCoLines(prev => prev.filter(l => lineKey(l) !== key));
+    else setCoLines(prev => prev.map(l => lineKey(l) === key ? { ...l, quantity: qty } : l));
   }
 
   const coSubtotal = coLines.reduce((s, l) => s + l.product.price * l.quantity, 0);
@@ -385,7 +408,7 @@ export default function OrdersPage() {
             {coProductSearch && searchableProducts.length > 0 && (
               <div className="mt-1 border border-gray-200 rounded-lg max-h-40 overflow-y-auto shadow-sm">
                 {searchableProducts.map(p => (
-                  <button key={p.productId} onClick={() => addLine(p)}
+                  <button key={p.productId} onClick={() => openPicker(p)}
                     className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-indigo-50 border-b border-gray-50 last:border-0 text-left">
                     <span>{p.productName} <span className="text-gray-400 text-xs">{p.sku}</span></span>
                     <span className="font-semibold text-indigo-600">{formatCurrency(p.price)}</span>
@@ -394,20 +417,69 @@ export default function OrdersPage() {
               </div>
             )}
 
+            {/* Size/color picker inline */}
+            {coPicker && (() => {
+              const sizes = coPicker.sizeInfo ? coPicker.sizeInfo.split('/').map(s => s.trim()).filter(Boolean) : [];
+              const colors = coPicker.color ? coPicker.color.split('/').map(c => c.trim()).filter(Boolean) : [];
+              return (
+                <div className="mt-2 border border-indigo-200 rounded-lg p-3 bg-indigo-50 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-indigo-800">{coPicker.productName}</p>
+                    <button onClick={() => setCoPicker(null)} className="text-gray-400 hover:text-red-400 text-xs">✕</button>
+                  </div>
+                  {sizes.length > 0 && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1.5">Size</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {sizes.map(s => (
+                          <button key={s} onClick={() => setCoPickedSize(s)}
+                            className={`px-3 py-1 rounded-lg border text-xs font-medium transition-all ${
+                              coPickedSize === s ? 'border-indigo-500 bg-indigo-100 text-indigo-700' : 'border-gray-200 bg-white text-gray-600'
+                            }`}>{s}</button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {colors.length > 1 && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1.5">Màu</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {colors.map(c => (
+                          <button key={c} onClick={() => setCoPickedColor(c)}
+                            className={`px-3 py-1 rounded-lg border text-xs font-medium transition-all ${
+                              coPickedColor === c ? 'border-indigo-500 bg-indigo-100 text-indigo-700' : 'border-gray-200 bg-white text-gray-600'
+                            }`}>{c}</button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <button onClick={confirmPicker}
+                    className="w-full py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700">
+                    + Thêm vào đơn
+                  </button>
+                </div>
+              );
+            })()}
+
             {/* Cart lines */}
             {coLines.length > 0 && (
               <div className="mt-2 border border-gray-100 rounded-lg divide-y divide-gray-50">
                 {coLines.map(l => (
-                  <div key={l.product.productId} className="flex items-center gap-2 px-3 py-2">
-                    <span className="flex-1 text-sm truncate">{l.product.productName}</span>
+                  <div key={lineKey(l)} className="flex items-center gap-2 px-3 py-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm truncate">{l.product.productName}</p>
+                      {(l.selectedSize || l.selectedColor) && (
+                        <p className="text-[10px] text-gray-400">{[l.selectedSize, l.selectedColor].filter(Boolean).join(' · ')}</p>
+                      )}
+                    </div>
                     <span className="text-xs text-gray-400">{formatCurrency(l.product.price)}</span>
                     <input type="number" min={1} value={l.quantity}
-                      onChange={e => updateLine(l.product.productId, parseInt(e.target.value) || 0)}
+                      onChange={e => updateLine(lineKey(l), parseInt(e.target.value) || 0)}
                       className="w-14 text-center border border-gray-200 rounded px-1 py-0.5 text-sm" />
                     <span className="text-xs font-semibold text-gray-700 w-20 text-right">
                       {formatCurrency(l.product.price * l.quantity)}
                     </span>
-                    <button onClick={() => updateLine(l.product.productId, 0)} className="text-gray-300 hover:text-red-400">
+                    <button onClick={() => updateLine(lineKey(l), 0)} className="text-gray-300 hover:text-red-400">
                       <Trash2 size={13} />
                     </button>
                   </div>
