@@ -213,6 +213,50 @@ export interface Promotion {
   createdAt: string;
 }
 
+export interface StockTransfer {
+  transferId: string;
+  fromBranchId: string;
+  fromBranchName: string;
+  toBranchId: string;
+  toBranchName: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  status: 'PENDING' | 'COMPLETED' | 'CANCELLED';
+  note: string;
+  createdAt: string;
+}
+
+export interface StockAudit {
+  auditId: string;
+  branchId: string;
+  branchName: string;
+  productId: string;
+  productName: string;
+  systemQuantity: number;
+  actualQuantity: number;
+  difference: number;
+  status: 'PENDING' | 'RESOLVED';
+  note: string;
+  resolvedNote: string;
+  createdAt: string;
+  resolvedAt?: string;
+}
+
+export interface SalesDashboard {
+  totalRevenue: number;
+  totalOrders: number;
+  avgOrderValue: number;
+  onlineOrders: number;
+  offlineOrders: number;
+  onlineRevenue: number;
+  offlineRevenue: number;
+  revenueByBranch: Array<{ name: string; revenue: number }>;
+  revenueByDate: Array<{ date: string; revenue: number }>;
+  dateFrom: string;
+  dateTo: string;
+}
+
 export interface CreatePromotionPayload {
   name: string;
   code?: string;

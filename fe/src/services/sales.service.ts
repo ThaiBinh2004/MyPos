@@ -173,3 +173,49 @@ export async function getSalesReports(branchId?: string): Promise<SalesReport[]>
   });
   return data;
 }
+
+export async function getSalesDashboard(params?: { branchId?: string; dateFrom?: string; dateTo?: string }): Promise<import('@/types').SalesDashboard> {
+  const { data } = await api.get('/sales/reports/dashboard', { params });
+  return data;
+}
+
+export async function getStockTransfers(branchId?: string): Promise<import('@/types').StockTransfer[]> {
+  const { data } = await api.get('/sales/stock-transfers', { params: branchId ? { branchId } : undefined });
+  return data;
+}
+
+export async function createStockTransfer(payload: {
+  fromBranchId: string; toBranchId: string; productId: string;
+  quantity: number; note?: string; createdByEmployeeId?: string;
+}): Promise<import('@/types').StockTransfer> {
+  const { data } = await api.post('/sales/stock-transfers', payload);
+  return data;
+}
+
+export async function completeStockTransfer(id: string): Promise<import('@/types').StockTransfer> {
+  const { data } = await api.patch(`/sales/stock-transfers/${id}/complete`);
+  return data;
+}
+
+export async function cancelStockTransfer(id: string): Promise<import('@/types').StockTransfer> {
+  const { data } = await api.patch(`/sales/stock-transfers/${id}/cancel`);
+  return data;
+}
+
+export async function getStockAudits(branchId?: string): Promise<import('@/types').StockAudit[]> {
+  const { data } = await api.get('/sales/stock-audits', { params: branchId ? { branchId } : undefined });
+  return data;
+}
+
+export async function createStockAudit(payload: {
+  branchId: string; productId: string; actualQuantity: number;
+  note?: string; auditedByEmployeeId?: string;
+}): Promise<import('@/types').StockAudit> {
+  const { data } = await api.post('/sales/stock-audits', payload);
+  return data;
+}
+
+export async function resolveStockAudit(id: string, resolvedNote: string): Promise<import('@/types').StockAudit> {
+  const { data } = await api.patch(`/sales/stock-audits/${id}/resolve`, { resolvedNote });
+  return data;
+}
