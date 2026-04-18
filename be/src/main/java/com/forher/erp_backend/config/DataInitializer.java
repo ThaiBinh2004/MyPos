@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -25,6 +26,10 @@ public class DataInitializer implements CommandLineRunner {
     private final PayrollDeductionRepository payrollDeductionRepository;
     private final AttendanceRepository     attendanceRepository;
     private final AttendanceRequestRepository attendanceRequestRepository;
+    private final CategoryRepository        categoryRepository;
+    private final ProductRepository         productRepository;
+    private final InventoryRepository       inventoryRepository;
+    private final CustomerRepository        customerRepository;
 
     @Override
     public void run(String... args) {
@@ -32,6 +37,10 @@ public class DataInitializer implements CommandLineRunner {
         seedEmployees();
         seedAccounts();
         seedContracts();
+        seedCategories();
+        seedProducts();
+        seedInventory();
+        seedCustomers();
         cleanJunkData();
     }
 
@@ -127,6 +136,74 @@ public class DataInitializer implements CommandLineRunner {
             existing.setAllowance(allowance);
             contractRepository.save(existing);
         }
+    }
+
+    // ── Danh mục ─────────────────────────────────────────────────────────────────
+    private void seedCategories() {
+        if (categoryRepository.count() > 0) return;
+        categoryRepository.save(Category.builder().categoryId("CAT001").categoryName("Áo").description("Áo các loại").build());
+        categoryRepository.save(Category.builder().categoryId("CAT002").categoryName("Quần").description("Quần các loại").build());
+        categoryRepository.save(Category.builder().categoryId("CAT003").categoryName("Váy").description("Váy đầm các loại").build());
+        categoryRepository.save(Category.builder().categoryId("CAT004").categoryName("Phụ kiện").description("Túi xách, thắt lưng, v.v.").build());
+        System.out.println(">>> Đã tạo 4 danh mục");
+    }
+
+    // ── Sản phẩm ─────────────────────────────────────────────────────────────────
+    private void seedProducts() {
+        if (productRepository.count() > 0) return;
+        Category ao  = categoryRepository.findById("CAT001").orElseThrow();
+        Category quan = categoryRepository.findById("CAT002").orElseThrow();
+        Category vay  = categoryRepository.findById("CAT003").orElseThrow();
+        Category pk   = categoryRepository.findById("CAT004").orElseThrow();
+
+        productRepository.save(Product.builder().productId("PRD001").sku("FH-AO-001").productName("Áo sơ mi trắng dài tay").price(new BigDecimal("320000")).sizeInfo("S/M/L/XL").color("Trắng").category(ao).build());
+        productRepository.save(Product.builder().productId("PRD002").sku("FH-AO-002").productName("Áo thun basic cổ tròn").price(new BigDecimal("180000")).sizeInfo("S/M/L").color("Đen").category(ao).build());
+        productRepository.save(Product.builder().productId("PRD003").sku("FH-AO-003").productName("Áo blouse hoa nhí").price(new BigDecimal("250000")).sizeInfo("S/M/L").color("Hồng").category(ao).build());
+        productRepository.save(Product.builder().productId("PRD004").sku("FH-AO-004").productName("Áo croptop thể thao").price(new BigDecimal("150000")).sizeInfo("S/M").color("Xanh navy").category(ao).build());
+        productRepository.save(Product.builder().productId("PRD005").sku("FH-QU-001").productName("Quần jean ống rộng").price(new BigDecimal("420000")).sizeInfo("26/27/28/29/30").color("Xanh nhạt").category(quan).build());
+        productRepository.save(Product.builder().productId("PRD006").sku("FH-QU-002").productName("Quần kaki lưng cao").price(new BigDecimal("380000")).sizeInfo("26/27/28/29").color("Be").category(quan).build());
+        productRepository.save(Product.builder().productId("PRD007").sku("FH-QU-003").productName("Quần short denim").price(new BigDecimal("220000")).sizeInfo("S/M/L").color("Xanh đậm").category(quan).build());
+        productRepository.save(Product.builder().productId("PRD008").sku("FH-VA-001").productName("Váy midi hoa nhí").price(new BigDecimal("350000")).sizeInfo("S/M/L").color("Vàng").category(vay).build());
+        productRepository.save(Product.builder().productId("PRD009").sku("FH-VA-002").productName("Đầm wrap dress").price(new BigDecimal("480000")).sizeInfo("S/M/L").color("Đỏ đô").category(vay).build());
+        productRepository.save(Product.builder().productId("PRD010").sku("FH-VA-003").productName("Váy mini tennis").price(new BigDecimal("280000")).sizeInfo("S/M").color("Trắng").category(vay).build());
+        productRepository.save(Product.builder().productId("PRD011").sku("FH-PK-001").productName("Túi xách tote canvas").price(new BigDecimal("220000")).color("Be").category(pk).build());
+        productRepository.save(Product.builder().productId("PRD012").sku("FH-PK-002").productName("Thắt lưng da PU").price(new BigDecimal("130000")).color("Đen").category(pk).build());
+        System.out.println(">>> Đã tạo 12 sản phẩm");
+    }
+
+    // ── Tồn kho ───────────────────────────────────────────────────────────────────
+    private void seedInventory() {
+        if (inventoryRepository.count() > 0) return;
+        Branch br1 = branchRepository.findById("BR001").orElseThrow();
+        Branch br2 = branchRepository.findById("BR002").orElseThrow();
+        Branch br3 = branchRepository.findById("BR003").orElseThrow();
+        List<Branch> branches = List.of(br1, br2, br3);
+
+        int idx = 1;
+        for (String pId : List.of("PRD001","PRD002","PRD003","PRD004","PRD005","PRD006","PRD007","PRD008","PRD009","PRD010","PRD011","PRD012")) {
+            Product p = productRepository.findById(pId).orElseThrow();
+            int[] qtys = { 30, 20, 15 };
+            for (int b = 0; b < 3; b++) {
+                String invId = String.format("INV%04d", idx++);
+                inventoryRepository.save(Inventory.builder()
+                        .inventoryId(invId).product(p).branch(branches.get(b))
+                        .quantity(qtys[b]).minThreshold(5).build());
+            }
+        }
+        System.out.println(">>> Đã tạo tồn kho cho 12 sản phẩm x 3 chi nhánh");
+    }
+
+    // ── Khách hàng ────────────────────────────────────────────────────────────────
+    private void seedCustomers() {
+        if (customerRepository.count() > 0) return;
+        customerRepository.save(Customer.builder().customerId("CUS001").fullName("Nguyễn Thị Bích").phoneNumber("0911000001").email("bich@gmail.com").loyaltyPoints(1500).customerRank("VIP").build());
+        customerRepository.save(Customer.builder().customerId("CUS002").fullName("Trần Minh Châu").phoneNumber("0911000002").email("chau@gmail.com").loyaltyPoints(850).customerRank("Vàng").build());
+        customerRepository.save(Customer.builder().customerId("CUS003").fullName("Lê Khánh Ly").phoneNumber("0911000003").loyaltyPoints(350).customerRank("Bạc").build());
+        customerRepository.save(Customer.builder().customerId("CUS004").fullName("Phạm Thu Hà").phoneNumber("0911000004").loyaltyPoints(80).customerRank("Thường").build());
+        customerRepository.save(Customer.builder().customerId("CUS005").fullName("Hoàng Mỹ Linh").phoneNumber("0911000005").email("linh@gmail.com").loyaltyPoints(2300).customerRank("VIP").build());
+        customerRepository.save(Customer.builder().customerId("CUS006").fullName("Vũ Thanh Tâm").phoneNumber("0911000006").loyaltyPoints(120).customerRank("Thường").build());
+        customerRepository.save(Customer.builder().customerId("CUS007").fullName("Đỗ Ngọc Ánh").phoneNumber("0911000007").loyaltyPoints(650).customerRank("Bạc").build());
+        System.out.println(">>> Đã tạo 7 khách hàng");
     }
 
     // ── Xóa dữ liệu rác (payroll, attendance, sales, deductions) ────────────────
