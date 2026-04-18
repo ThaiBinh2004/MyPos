@@ -23,6 +23,7 @@ const STATUS: Record<string, { label: string; variant: 'success' | 'danger' | 'w
   REJECTED:   { label: 'Bị từ chối', variant: 'danger' },
   TERMINATED: { label: 'Đã chấm dứt', variant: 'danger' },
   EXPIRED:    { label: 'Hết hạn',    variant: 'default' },
+  LIQUIDATED: { label: 'Đã thanh lý', variant: 'default' },
 };
 
 

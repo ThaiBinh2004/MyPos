@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { logout } from '@/services/auth.service';
 import { getEmployee, getBranches } from '@/services/employee.service';
 import { getEmployeeContracts } from '@/services/contract.service';
+import { getEmployeeOffboardings } from '@/services/offboarding.service';
 import { EmployeeDetail } from '@/app/(dashboard)/hr/employees/employee-detail';
 
 export function Header() {
@@ -29,6 +30,16 @@ export function Header() {
   });
 
   const hasUnsigned = myContracts.some((c) => c.status === 'ACTIVE' && !c.signedByEmployee);
+
+  const { data: myOffboardings = [] } = useQuery({
+    queryKey: ['my-offboardings', user?.employeeId],
+    queryFn: () => getEmployeeOffboardings(user!.employeeId!),
+    enabled: !!user?.employeeId,
+    staleTime: 60 * 1000,
+  });
+  const hasPendingHandover = myOffboardings.some(
+    (o) => o.status === 'ASSETS_CONFIRMED' && !o.employeeConfirmed
+  );
 
   const { data: branches = [] } = useQuery({
     queryKey: ['branches'],
@@ -76,12 +87,12 @@ export function Header() {
             </div>
             <button
               onClick={() => user.employeeId && setOpenProfile(true)}
-              title={hasUnsigned ? 'Bạn có hợp đồng chờ ký xác nhận' : 'Xem hồ sơ'}
+              title={hasPendingHandover ? 'Bạn cần xác nhận bàn giao tài sản' : hasUnsigned ? 'Bạn có hợp đồng chờ ký xác nhận' : 'Xem hồ sơ'}
               className="relative flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white shadow-sm shadow-indigo-200 hover:bg-indigo-700 transition-colors cursor-pointer"
             >
               {getInitials(user.fullName)}
-              {hasUnsigned && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-amber-500 ring-2 ring-white" />
+              {(hasUnsigned || hasPendingHandover) && (
+                <span className={`absolute -top-0.5 -right-0.5 flex h-3 w-3 items-center justify-center rounded-full ring-2 ring-white ${hasPendingHandover ? 'bg-red-500' : 'bg-amber-500'}`} />
               )}
             </button>
             <button

@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { Pencil, X, Check, ChevronDown, ChevronUp, PenLine, Banknote } from 'lucide-react';
-import { updateEmployee, selfUpdateEmployee, createProposal } from '@/services/employee.service';
+import { Pencil, X, Check, ChevronDown, ChevronUp, PenLine, Banknote, UserMinus, KeyRound, PackageCheck } from 'lucide-react';
+import { updateEmployee, selfUpdateEmployee, createProposal, getEmployeeAccount, createEmployeeAccount, changeEmployeePassword } from '@/services/employee.service';
 import { getEmployeeContracts, signContract, updateContract } from '@/services/contract.service';
+import { initiateOffboarding, getEmployeeOffboardings, employeeConfirmOffboarding, generateOtp } from '@/services/offboarding.service';
+import { getAssets } from '@/services/asset.service';
 import { Button, Input, Select, Badge, Modal } from '@/components/ui';
 import { formatDate, formatCurrency } from '@/lib/utils';
 import type { Employee, Branch } from '@/types';
@@ -47,6 +49,22 @@ export function EmployeeDetail({ employee, role, currentEmployeeId, currentEmplo
   const [editing, setEditing] = useState(false);
   const [proposing, setProposing] = useState(false);
   const [showContracts, setShowContracts] = useState(defaultOpenContracts);
+  const [showResign, setShowResign] = useState(false);
+  const [resignReason, setResignReason] = useState('');
+  const [resignLastDay, setResignLastDay] = useState('');
+  const [showCreateAccount, setShowCreateAccount] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newRole, setNewRole] = useState('employee');
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [changeNewPassword, setChangeNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpDemo, setOtpDemo] = useState('');
+  const [otpError, setOtpError] = useState('');
+
   const [signingContract, setSigningContract] = useState<typeof contracts[0] | null>(null);
   const [agreed, setAgreed] = useState(false);
   const [adjustingSalary, setAdjustingSalary] = useState(false);
@@ -90,6 +108,72 @@ export function EmployeeDetail({ employee, role, currentEmployeeId, currentEmplo
     }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['employees'] }); setEditing(false); },
   });
+  const { data: existingAccount, refetch: refetchAccount } = useQuery({
+    queryKey: ['employee-account', employee.employeeId],
+    queryFn: () => getEmployeeAccount(employee.employeeId),
+    enabled: isManager || isDirector,
+  });
+
+  const { data: myOffboardings = [], refetch: refetchOffboardings } = useQuery({
+    queryKey: ['my-offboardings', employee.employeeId],
+    queryFn: () => getEmployeeOffboardings(employee.employeeId),
+    enabled: isSelf,
+  });
+  const pendingConfirmOffboarding = myOffboardings.find(
+    (o) => o.status === 'ASSETS_CONFIRMED' && !o.employeeConfirmed
+  );
+
+  const generateOtpMut = useMutation({
+    mutationFn: (id: string) => generateOtp(id, 'EMPLOYEE'),
+    onSuccess: () => { setOtpCode(''); setOtpError(''); setShowOtpModal(true); },
+  });
+
+  const confirmOffboardingMut = useMutation({
+    mutationFn: ({ id, otp }: { id: string; otp: string }) =>
+      employeeConfirmOffboarding(id, employee.employeeId, otp),
+    onSuccess: () => { refetchOffboardings(); setShowOtpModal(false); setOtpCode(''); setOtpDemo(''); },
+    onError: () => setOtpError('OTP không đúng hoặc đã hết hạn.'),
+  });
+
+  const createAccountMutation = useMutation({
+    mutationFn: () => createEmployeeAccount(employee.employeeId, newUsername, newPassword, newRole),
+    onSuccess: () => {
+      refetchAccount();
+      setShowCreateAccount(false);
+      setNewUsername(''); setNewPassword(''); setNewRole('employee');
+    },
+  });
+
+  const changePasswordMutation = useMutation({
+    mutationFn: () => changeEmployeePassword(employee.employeeId, oldPassword, changeNewPassword),
+    onSuccess: () => {
+      setShowChangePassword(false);
+      setOldPassword(''); setChangeNewPassword(''); setConfirmPassword('');
+    },
+  });
+
+  const { data: myAssetsData } = useQuery({
+    queryKey: ['assets-by-employee', employee.employeeId],
+    queryFn: () => getAssets({ employeeId: employee.employeeId }),
+    enabled: showResign,
+  });
+  const myAssets = myAssetsData?.data ?? [];
+
+  const resignMutation = useMutation({
+    mutationFn: () => initiateOffboarding({
+      employeeId: employee.employeeId,
+      initiatedByEmployeeId: currentEmployeeId ?? employee.employeeId,
+      reason: resignReason,
+      lastWorkingDate: resignLastDay,
+    }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['employees'] });
+      setShowResign(false);
+      setResignReason(''); setResignLastDay('');
+      onClose();
+    },
+  });
+
   const proposalMutation = useMutation({
     mutationFn: (data: { proposedPosition: string; proposedDepartment: string; reason: string }) =>
       createProposal({
@@ -116,53 +200,111 @@ export function EmployeeDetail({ employee, role, currentEmployeeId, currentEmplo
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
         {/* Header */}
-        <div className="flex items-center gap-3 p-3 bg-indigo-50 rounded-lg">
-          <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold shrink-0">
-            {employee.fullName.charAt(0)}
+        <div className="rounded-xl bg-linear-to-br from-indigo-50 to-slate-50 border border-indigo-100 p-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center text-white text-lg font-bold shrink-0 shadow-md shadow-indigo-200">
+              {employee.fullName.charAt(0)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-gray-900 text-base leading-tight">{employee.fullName}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{employee.employeeId} · {employee.position}{employee.branchName ? ` · ${employee.branchName}` : ''}</p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-gray-900 truncate">{employee.fullName}</p>
-            <p className="text-xs text-gray-500">{employee.employeeId} · {employee.position}</p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Badge variant={st.variant}>{st.label}</Badge>
-            {isDirector && activeContract && !editing && (
-              <button type="button"
-                onClick={() => {
-                  setNewBaseSalary(String(activeContract.baseSalary));
-                  setNewAllowance(String(activeContract.allowance ?? 0));
-                  setShowContracts(true);
-                  setAdjustingSalary(true);
-                }}
-                className="flex items-center gap-1 rounded-md border border-emerald-200 bg-white px-2.5 py-1 text-xs font-medium text-emerald-600 hover:bg-emerald-50 transition-colors">
-                <Banknote size={11} /> Điều chỉnh lương
-              </button>
-            )}
-            {canPropose && !editing && (
-              <button type="button" onClick={() => { resetProp(); setProposing(true); }}
-                className="flex items-center gap-1 rounded-md border border-amber-200 bg-white px-2.5 py-1 text-xs font-medium text-amber-600 hover:bg-amber-50 transition-colors">
-                Đề xuất
-              </button>
-            )}
-            {canEdit && !editing && (
-              <button type="button" onClick={() => { reset({ ...employee }); setEditing(true); }}
-                className="flex items-center gap-1 rounded-md border border-indigo-200 bg-white px-2.5 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50 transition-colors">
-                <Pencil size={11} /> Sửa
-              </button>
-            )}
-            {editing && (
-              <div className="flex gap-1.5">
-                <button type="button" onClick={() => setEditing(false)}
-                  className="flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-500 hover:bg-gray-50 transition-colors">
-                  <X size={11} /> Huỷ
+
+          {/* Actions row */}
+          {!editing && (
+            <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-indigo-100">
+              {(isManager || isDirector) && (
+                existingAccount
+                  ? <span className="flex items-center gap-1.5 rounded-lg bg-white border border-slate-200 px-3 py-1.5 text-xs text-slate-500">
+                      <KeyRound size={12} /> {existingAccount.username}
+                    </span>
+                  : <button type="button" onClick={() => { setNewUsername(employee.employeeId.toLowerCase()); setShowCreateAccount(true); }}
+                      className="flex items-center gap-1.5 rounded-lg bg-violet-50 border border-violet-200 px-3 py-1.5 text-xs font-medium text-violet-600 hover:bg-violet-100 transition-colors">
+                      <KeyRound size={12} /> Tạo tài khoản
+                    </button>
+              )}
+              {isSelf && (
+                <button type="button" onClick={() => setShowChangePassword(true)}
+                  className="flex items-center gap-1.5 rounded-lg bg-white border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+                  <KeyRound size={12} /> Đổi mật khẩu
                 </button>
-                <button type="submit" disabled={loading}
-                  className="flex items-center gap-1 rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-60 transition-colors">
-                  <Check size={11} /> Lưu
+              )}
+              {isSelf && employee.status === 'ACTIVE' && (
+                <button type="button" onClick={() => setShowResign(true)}
+                  className="flex items-center gap-1.5 rounded-lg bg-red-50 border border-red-200 px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-100 transition-colors">
+                  <UserMinus size={12} /> Nghỉ việc
                 </button>
+              )}
+              {isSelf && pendingConfirmOffboarding && (
+                <button
+                  type="button"
+                  onClick={() => generateOtpMut.mutate(pendingConfirmOffboarding.offboardingId)}
+                  disabled={generateOtpMut.isPending}
+                  className="flex items-center gap-1.5 rounded-lg bg-orange-50 border border-orange-200 px-3 py-1.5 text-xs font-medium text-orange-600 hover:bg-orange-100 disabled:opacity-60 transition-colors">
+                  <PackageCheck size={12} /> {generateOtpMut.isPending ? 'Đang gửi OTP...' : 'Ký xác nhận bàn giao (OTP)'}
+                </button>
+              )}
+              {isDirector && activeContract && (
+                <button type="button"
+                  onClick={() => { setNewBaseSalary(String(activeContract.baseSalary)); setNewAllowance(String(activeContract.allowance ?? 0)); setShowContracts(true); setAdjustingSalary(true); }}
+                  className="flex items-center gap-1.5 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-100 transition-colors">
+                  <Banknote size={12} /> Điều chỉnh lương
+                </button>
+              )}
+              {canPropose && (
+                <button type="button" onClick={() => { resetProp(); setProposing(true); }}
+                  className="flex items-center gap-1.5 rounded-lg bg-amber-50 border border-amber-200 px-3 py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-100 transition-colors">
+                  Đề xuất
+                </button>
+              )}
+              {canEdit && (
+                <button type="button" onClick={() => { reset({ ...employee }); setEditing(true); }}
+                  className="flex items-center gap-1.5 rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-100 transition-colors">
+                  <Pencil size={12} /> Sửa
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Danh sách tài sản cần bàn giao */}
+          {isSelf && pendingConfirmOffboarding && pendingConfirmOffboarding.assetReturns.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-orange-100">
+              <p className="text-xs font-medium text-orange-700 mb-2 flex items-center gap-1.5">
+                <PackageCheck size={12} /> Tài sản cần bàn giao ({pendingConfirmOffboarding.assetReturns.length})
+              </p>
+              <div className="space-y-1.5">
+                {pendingConfirmOffboarding.assetReturns.map((r) => (
+                  <div key={r.returnId} className="flex items-center justify-between rounded-lg bg-white border border-orange-100 px-3 py-2">
+                    <span className="text-xs text-gray-700">{r.assetName}</span>
+                    <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                      r.returnStatus === 'PENDING'           ? 'bg-gray-100 text-gray-500' :
+                      r.returnStatus === 'RETURNED_GOOD'    ? 'bg-green-100 text-green-700' :
+                      r.returnStatus === 'RETURNED_DAMAGED' ? 'bg-orange-100 text-orange-700' :
+                      'bg-red-100 text-red-700'
+                    }`}>
+                      {r.returnStatus === 'PENDING' ? 'Chờ bàn giao' :
+                       r.returnStatus === 'RETURNED_GOOD' ? 'Tình trạng tốt' :
+                       r.returnStatus === 'RETURNED_DAMAGED' ? 'Bị hỏng' : 'Mất'}
+                    </span>
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {editing && (
+            <div className="flex gap-2 mt-3 pt-3 border-t border-indigo-100">
+              <button type="button" onClick={() => setEditing(false)}
+                className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-50 transition-colors">
+                <X size={12} /> Huỷ
+              </button>
+              <button type="submit" disabled={loading}
+                className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-60 transition-colors">
+                <Check size={12} /> Lưu
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Grid 2 cột */}
@@ -391,6 +533,151 @@ export function EmployeeDetail({ employee, role, currentEmployeeId, currentEmplo
         </Modal>
       )}
 
+      {/* Change password modal */}
+      {showChangePassword && (
+        <Modal open onClose={() => setShowChangePassword(false)} title="Đổi mật khẩu" size="sm">
+          <div className="space-y-4">
+            <Input label="Mật khẩu hiện tại" type="password" value={oldPassword} onChange={e => setOldPassword(e.target.value)} />
+            <Input label="Mật khẩu mới" type="password" value={changeNewPassword} onChange={e => setChangeNewPassword(e.target.value)} />
+            <Input label="Xác nhận mật khẩu mới" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+            {confirmPassword && changeNewPassword !== confirmPassword && (
+              <p className="text-xs text-red-500">Mật khẩu xác nhận không khớp.</p>
+            )}
+            {changePasswordMutation.isError && (
+              <p className="text-xs text-red-500">{String((changePasswordMutation.error as any)?.response?.data ?? 'Có lỗi xảy ra')}</p>
+            )}
+            {changePasswordMutation.isSuccess && (
+              <p className="text-xs text-green-600">Đổi mật khẩu thành công!</p>
+            )}
+            <div className="flex justify-end">
+              <button
+                onClick={() => changePasswordMutation.mutate()}
+                disabled={!oldPassword || !changeNewPassword || changeNewPassword !== confirmPassword || changePasswordMutation.isPending}
+                className="rounded-md bg-indigo-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              >
+                {changePasswordMutation.isPending ? 'Đang lưu...' : 'Xác nhận'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Create account modal */}
+      {showCreateAccount && (
+        <Modal open onClose={() => setShowCreateAccount(false)} title="Tạo tài khoản đăng nhập" size="sm">
+          <div className="space-y-4">
+            <Input
+              label="Tên đăng nhập"
+              value={newUsername}
+              onChange={e => setNewUsername(e.target.value)}
+              placeholder="VD: emp001"
+            />
+            <Input
+              label="Mật khẩu"
+              type="password"
+              value={newPassword}
+              onChange={e => setNewPassword(e.target.value)}
+              placeholder="Tối thiểu 6 ký tự"
+            />
+            {createAccountMutation.isError && (
+              <p className="text-xs text-red-500">{String((createAccountMutation.error as any)?.response?.data ?? 'Có lỗi xảy ra')}</p>
+            )}
+            <div className="flex justify-end">
+              <button
+                onClick={() => createAccountMutation.mutate()}
+                disabled={!newUsername || !newPassword || createAccountMutation.isPending}
+                className="rounded-md bg-violet-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-50 transition-colors"
+              >
+                {createAccountMutation.isPending ? 'Đang tạo...' : 'Tạo tài khoản'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Resign modal */}
+      {/* OTP Modal — ký xác nhận biên bản */}
+      {showOtpModal && pendingConfirmOffboarding && (
+        <Modal open onClose={() => setShowOtpModal(false)} title="Ký xác nhận biên bản bàn giao" size="sm">
+          <div className="space-y-4">
+            <div className="rounded-lg bg-blue-50 border border-blue-100 px-4 py-3 text-sm text-blue-700">
+              Mã OTP đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư.
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1 block">Nhập mã OTP</label>
+              <input
+                type="text"
+                maxLength={6}
+                value={otpCode}
+                onChange={e => { setOtpCode(e.target.value.replace(/\D/g, '')); setOtpError(''); }}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-center text-lg font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-orange-300"
+                placeholder="000000"
+              />
+              {otpError && <p className="text-xs text-red-500 mt-1">{otpError}</p>}
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setShowOtpModal(false)}
+                className="rounded-md border border-gray-200 px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-50">
+                Huỷ
+              </button>
+              <button
+                onClick={() => confirmOffboardingMut.mutate({ id: pendingConfirmOffboarding.offboardingId, otp: otpCode })}
+                disabled={otpCode.length !== 6 || confirmOffboardingMut.isPending}
+                className="flex items-center gap-1.5 rounded-md bg-orange-500 px-4 py-1.5 text-xs font-medium text-white hover:bg-orange-600 disabled:opacity-50 transition-colors">
+                <PackageCheck size={12} />
+                {confirmOffboardingMut.isPending ? 'Đang xác nhận...' : 'Xác nhận ký'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {showResign && (
+        <Modal open onClose={() => setShowResign(false)} title="Xin nghỉ việc" size="sm">
+          <div className="space-y-4">
+            {myAssets.length > 0 && (
+              <div className="rounded-lg border border-amber-100 bg-amber-50 p-3">
+                <p className="text-xs font-medium text-amber-700 mb-2 flex items-center gap-1.5">
+                  <PackageCheck size={12} /> Tài sản cần hoàn trả ({myAssets.length})
+                </p>
+                <div className="space-y-1">
+                  {myAssets.map((a) => (
+                    <div key={a.assetId} className="flex items-center justify-between text-xs">
+                      <span className="text-gray-700">{a.assetName}</span>
+                      <span className="text-gray-400">{formatCurrency(a.assetValue)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <Input
+              label="Lý do nghỉ việc"
+              value={resignReason}
+              onChange={e => setResignReason(e.target.value)}
+              placeholder="VD: Tìm cơ hội mới, lý do cá nhân..."
+            />
+            <Input
+              label="Ngày làm việc cuối cùng"
+              type="date"
+              value={resignLastDay}
+              onChange={e => setResignLastDay(e.target.value)}
+            />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setShowResign(false)}
+                className="rounded-md border border-gray-200 px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-50">
+                Huỷ
+              </button>
+              <button
+                onClick={() => resignMutation.mutate()}
+                disabled={!resignReason || !resignLastDay || resignMutation.isPending}
+                className="rounded-md bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600 disabled:opacity-50 transition-colors">
+                {resignMutation.isPending ? 'Đang gửi...' : 'Gửi đơn nghỉ việc'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
       {/* Contracts section */}
       <div className="mt-4 border-t border-gray-100 pt-3">
         <button
@@ -413,6 +700,7 @@ export function EmployeeDetail({ employee, role, currentEmployeeId, currentEmplo
                 const statusLabel: Record<string, string> = {
                   ACTIVE: 'Hiệu lực', PENDING: 'Chờ duyệt', DRAFT: 'Nháp',
                   REJECTED: 'Từ chối', TERMINATED: 'Chấm dứt', EXPIRED: 'Hết hạn',
+                  LIQUIDATED: 'Đã thanh lý',
                 };
                 const statusColor: Record<string, string> = {
                   ACTIVE: 'bg-green-100 text-green-700',
@@ -421,6 +709,7 @@ export function EmployeeDetail({ employee, role, currentEmployeeId, currentEmplo
                   REJECTED: 'bg-red-100 text-red-600',
                   TERMINATED: 'bg-red-100 text-red-600',
                   EXPIRED: 'bg-gray-100 text-gray-500',
+                  LIQUIDATED: 'bg-purple-100 text-purple-700',
                 };
                 return (
                   <div key={c.contractId}

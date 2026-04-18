@@ -63,7 +63,18 @@ public class DataInitializer implements CommandLineRunner {
 
     // ── Tài khoản ────────────────────────────────────────────────────────────────
     private void seedAccounts() {
-        if (userAccountRepository.count() > 0) return;
+        if (userAccountRepository.count() > 0) {
+            // Đảm bảo luôn có acc kế toán dù đã seed trước đó
+            if (userAccountRepository.findByUsername("accountant").isEmpty()) {
+                Employee emp3 = employeeRepository.findById("EMP003").orElseThrow();
+                userAccountRepository.save(UserAccount.builder()
+                        .accountId("ACC003").username("accountant")
+                        .password(passwordEncoder.encode("accountant123"))
+                        .role("accountant").employee(emp3).build());
+                System.out.println(">>> Đã tạo bổ sung acc kế toán");
+            }
+            return;
+        }
         Employee emp1 = employeeRepository.findById("EMP001").orElseThrow();
         Employee emp2 = employeeRepository.findById("EMP002").orElseThrow();
         Employee emp3 = employeeRepository.findById("EMP003").orElseThrow();

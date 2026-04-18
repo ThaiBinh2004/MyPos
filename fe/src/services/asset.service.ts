@@ -4,6 +4,7 @@ import type {
   AssetHandover,
   AssetFilters,
   CreateAssetPayload,
+  AssignAssetPayload,
   HandoverAssetPayload,
   UpdateAssetConditionPayload,
   PaginatedResponse,
@@ -29,6 +30,11 @@ export async function updateAssetCondition(
   payload: UpdateAssetConditionPayload
 ): Promise<Asset> {
   const { data } = await api.patch<Asset>(`/hr/assets/${id}/condition`, payload);
+  return data;
+}
+
+export async function assignAsset(id: string, payload: AssignAssetPayload): Promise<Asset> {
+  const { data } = await api.patch<Asset>(`/hr/assets/${id}/assign`, payload);
   return data;
 }
 

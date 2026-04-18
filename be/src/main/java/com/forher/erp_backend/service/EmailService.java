@@ -68,6 +68,63 @@ public class EmailService {
     }
   }
 
+  @Async
+  public void sendOtp(String toEmail, String recipientName, String otp, String offboardingId, String type) {
+    try {
+      var msg = mailSender.createMimeMessage();
+      var helper = new MimeMessageHelper(msg, true, "UTF-8");
+      helper.setTo(toEmail);
+      helper.setSubject("[FORHER] Mã OTP xác nhận bàn giao nghỉ việc");
+      helper.setText(buildOtpEmail(recipientName, otp, type), true);
+      mailSender.send(msg);
+      log.info("Đã gửi OTP offboarding {} ({}) tới: {}", offboardingId, type, toEmail);
+    } catch (Exception e) {
+      log.error("Lỗi gửi OTP offboarding {} tới {}: {}", offboardingId, toEmail, e.getMessage());
+    }
+  }
+
+  private String buildOtpEmail(String name, String otp, String type) {
+    String role = "EMPLOYEE".equals(type) ? "nhân viên" : "quản lý chi nhánh";
+    return """
+        <!DOCTYPE html>
+        <html><head><meta charset="UTF-8"></head>
+        <body style="margin:0;padding:0;background-color:#f3f4f6;font-family:'Segoe UI',Arial,sans-serif">
+          <table width="100%%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 0">
+            <tr><td align="center">
+              <table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
+                <tr>
+                  <td style="background:linear-gradient(135deg,#4f46e5 0%%,#7c3aed 100%%);padding:28px 40px;text-align:center">
+                    <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:1px">FORHER</h1>
+                    <p style="margin:6px 0 0;color:#c7d2fe;font-size:12px;letter-spacing:2px;text-transform:uppercase">Xác nhận bàn giao nghỉ việc</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:36px 40px;text-align:center">
+                    <p style="margin:0 0 8px;color:#374151;font-size:15px;text-align:left">Kính gửi <strong>%s</strong>,</p>
+                    <p style="margin:0 0 28px;color:#6b7280;font-size:14px;line-height:1.6;text-align:left">
+                      Bạn đang ký xác nhận với tư cách <strong>%s</strong> trong quy trình bàn giao nghỉ việc.
+                      Mã OTP của bạn là:
+                    </p>
+                    <div style="background:#f0f0ff;border:2px dashed #4f46e5;border-radius:10px;padding:20px 40px;display:inline-block;margin-bottom:28px">
+                      <span style="font-size:36px;font-weight:700;letter-spacing:12px;color:#4f46e5">%s</span>
+                    </div>
+                    <p style="margin:0;color:#9ca3af;font-size:13px">Mã có hiệu lực trong <strong>5 phút</strong>. Không chia sẻ mã này cho bất kỳ ai.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="background:#f9fafb;padding:16px 40px;border-top:1px solid #e5e7eb">
+                    <p style="margin:0;color:#374151;font-size:13px;font-weight:600">Phòng Nhân sự — FORHER</p>
+                    <p style="margin:4px 0 0;color:#9ca3af;font-size:12px">Email này được gửi tự động, vui lòng không trả lời trực tiếp.</p>
+                  </td>
+                </tr>
+              </table>
+            </td></tr>
+          </table>
+        </body></html>
+        """
+        .formatted(name, role, otp);
+  }
+
   private String buildOfferEmail(String name, String position, String salary, String token) {
     String baseUrl = "http://localhost:8080";
     String acceptUrl = baseUrl + "/api/v1/offers/accept?token=" + token;

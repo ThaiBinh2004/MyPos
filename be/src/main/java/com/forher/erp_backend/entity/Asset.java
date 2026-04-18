@@ -18,7 +18,7 @@ public class Asset {
     @Column(name = "asset_name", length = 200, nullable = false)
     private String assetName;
 
-    @Column(name = "asset_type", length = 100, nullable = false)
+    @Column(name = "asset_type", length = 100)
     private String assetType;
 
     @ManyToOne(fetch = FetchType.LAZY)

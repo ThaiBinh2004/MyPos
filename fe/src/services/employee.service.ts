@@ -76,3 +76,39 @@ export async function rejectProposal(id: string, reviewerNote?: string): Promise
   const { data } = await api.patch<EmployeeProposal>(`/hr/proposals/${id}/reject`, { reviewerNote });
   return data;
 }
+
+export interface EmployeeAccount {
+  accountId: string;
+  username: string;
+  role: string;
+  isActive: boolean;
+}
+
+export async function getEmployeeAccount(employeeId: string): Promise<EmployeeAccount | null> {
+  try {
+    const { data } = await api.get<EmployeeAccount>(`/hr/employees/${employeeId}/account`);
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+export async function changeEmployeePassword(
+  employeeId: string,
+  oldPassword: string,
+  newPassword: string
+): Promise<void> {
+  await api.patch(`/hr/employees/${employeeId}/account/change-password`, { oldPassword, newPassword });
+}
+
+export async function createEmployeeAccount(
+  employeeId: string,
+  username: string,
+  password: string,
+  role: string
+): Promise<EmployeeAccount> {
+  const { data } = await api.post<EmployeeAccount>(`/hr/employees/${employeeId}/account`, {
+    username, password, role,
+  });
+  return data;
+}

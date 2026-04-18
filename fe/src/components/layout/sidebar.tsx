@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Users, FileText, UserPlus, Clock, DollarSign, Package,
-  ShoppingCart, BarChart2, Boxes, Truck, ClipboardList, Home, Tag, Monitor, PieChart,
+  ShoppingCart, BarChart2, Boxes, Truck, ClipboardList, Home, Tag, Monitor, PieChart, LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
@@ -19,6 +19,7 @@ const hrNav = [
   { label: 'Lương',      href: '/hr/payroll',           icon: DollarSign, roles: FINANCE_ROLES },
   { label: 'Phiếu lương', href: '/hr/payroll/my',      icon: DollarSign, roles: ['employee', 'hr'] },
   { label: 'Tài sản',    href: '/hr/assets',            icon: Package,    roles: MANAGER_ROLES },
+  { label: 'Quyết toán', href: '/hr/offboarding',      icon: LogOut,     roles: FINANCE_ROLES },
   { label: 'Báo cáo',   href: '/hr/reports',           icon: PieChart,   roles: ['director'] },
 ];
 

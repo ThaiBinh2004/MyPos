@@ -37,6 +37,8 @@ public class AssetService implements IAssetService {
         existing.setAssetName(details.getAssetName());
         existing.setAssetType(details.getAssetType());
         existing.setAssetValue(details.getAssetValue());
+        existing.setEmployee(details.getEmployee());
+        existing.setHandoverDate(details.getHandoverDate());
         return assetRepository.save(existing);
     }
 
