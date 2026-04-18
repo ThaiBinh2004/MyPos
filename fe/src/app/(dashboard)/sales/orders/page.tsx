@@ -121,9 +121,13 @@ export default function OrdersPage() {
 
   async function searchCustomer() {
     if (!coPhone.trim()) return;
-    const list = await getCustomers(coPhone.trim());
-    if (list.length > 0) setCoCustomer(list[0]);
-    else { setCoCustomer(null); setCoShowNewCust(true); setCoNewPhone(coPhone); }
+    try {
+      const list = await getCustomers(coPhone.trim());
+      if (list.length > 0) setCoCustomer(list[0]);
+      else { setCoCustomer(null); setCoShowNewCust(true); setCoNewPhone(coPhone); }
+    } catch {
+      setCoCustomer(null); setCoShowNewCust(true); setCoNewPhone(coPhone);
+    }
   }
 
   function addLine(p: Product) {

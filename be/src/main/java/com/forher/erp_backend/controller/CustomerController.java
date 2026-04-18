@@ -25,8 +25,8 @@ public class CustomerController {
     public ResponseEntity<?> getAll(@RequestParam(required = false) String phone) {
         if (phone != null && !phone.isBlank()) {
             return customerRepo.findByPhoneNumber(phone)
-                    .map(ResponseEntity::ok)
-                    .orElse(ResponseEntity.notFound().build());
+                    .map(c -> ResponseEntity.ok(java.util.List.of(c)))
+                    .orElse(ResponseEntity.ok(java.util.List.of()));
         }
         return ResponseEntity.ok(customerService.getAllCustomers());
     }
