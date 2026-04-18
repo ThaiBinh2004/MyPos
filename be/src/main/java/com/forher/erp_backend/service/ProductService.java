@@ -38,13 +38,13 @@ public class ProductService implements IProductService {
     @Transactional
     public Product updateProduct(String id, Product productDetails) {
         Product existing = getProductById(id);
-        existing.setProductName(productDetails.getProductName());
-        existing.setPrice(productDetails.getPrice());
-        existing.setSizeInfo(productDetails.getSizeInfo());
-        existing.setColor(productDetails.getColor());
-        existing.setImageUrl(productDetails.getImageUrl());
-        existing.setCategory(productDetails.getCategory());
-        existing.setStatus(productDetails.getStatus());
+        if (productDetails.getProductName() != null) existing.setProductName(productDetails.getProductName());
+        if (productDetails.getPrice() != null) existing.setPrice(productDetails.getPrice());
+        if (productDetails.getSizeInfo() != null) existing.setSizeInfo(productDetails.getSizeInfo());
+        if (productDetails.getColor() != null) existing.setColor(productDetails.getColor());
+        if (productDetails.getImageUrl() != null) existing.setImageUrl(productDetails.getImageUrl());
+        if (productDetails.getCategory() != null) existing.setCategory(productDetails.getCategory());
+        if (productDetails.getStatus() != null) existing.setStatus(productDetails.getStatus());
         return productRepository.save(existing);
     }
 
