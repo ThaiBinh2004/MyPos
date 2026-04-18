@@ -12,7 +12,7 @@ import { Modal } from "@/components/ui/modal";
 import { formatCurrency } from "@/lib/utils";
 import {
   Search, Plus, Minus, Trash2, UserSearch, UserPlus,
-  CreditCard, Banknote, Receipt, ShoppingCart, CheckCircle, Gift
+  Banknote, Receipt, ShoppingCart, CheckCircle, Gift
 } from "lucide-react";
 
 interface CartItem {
@@ -41,7 +41,7 @@ export default function PosPage() {
   const [newCustPhone, setNewCustPhone] = useState("");
 
   // Payment
-  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "TRANSFER" | "CARD">("CASH");
+  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "TRANSFER">("CASH");
   const [note, setNote] = useState("");
 
   // Size/color picker
@@ -338,7 +338,7 @@ export default function PosPage() {
         {/* Payment method */}
         <div className="px-4 py-2 border-t border-gray-100">
           <div className="flex gap-2">
-            {(["CASH", "TRANSFER", "CARD"] as const).map(m => (
+            {(["CASH", "TRANSFER"] as const).map(m => (
               <button
                 key={m}
                 onClick={() => setPaymentMethod(m)}
@@ -346,8 +346,8 @@ export default function PosPage() {
                   paymentMethod === m ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-gray-200 text-gray-500 hover:border-indigo-300"
                 }`}
               >
-                {m === "CASH" ? <Banknote size={16} className="mb-0.5" /> : m === "TRANSFER" ? <Receipt size={16} className="mb-0.5" /> : <CreditCard size={16} className="mb-0.5" />}
-                {m === "CASH" ? "Tiền mặt" : m === "TRANSFER" ? "Chuyển khoản" : "Thẻ"}
+                {m === "CASH" ? <Banknote size={16} className="mb-0.5" /> : <Receipt size={16} className="mb-0.5" />}
+                {m === "CASH" ? "Tiền mặt" : "Chuyển khoản"}
               </button>
             ))}
           </div>
