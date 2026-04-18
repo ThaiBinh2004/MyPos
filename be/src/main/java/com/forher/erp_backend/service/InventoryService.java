@@ -2,6 +2,7 @@ package com.forher.erp_backend.service;
 
 import com.forher.erp_backend.entity.Inventory;
 import com.forher.erp_backend.repository.InventoryRepository;
+import com.forher.erp_backend.repository.ProductRepository;
 import com.forher.erp_backend.service.Interface.IInventoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 public class InventoryService implements IInventoryService {
 
     private final InventoryRepository inventoryRepository;
+    private final ProductRepository productRepository;
 
     @Override
     public List<Inventory> getAllInventory() {
@@ -43,6 +45,16 @@ public class InventoryService implements IInventoryService {
 
         inventory.setQuantity(newQuantity);
         inventoryRepository.save(inventory);
+
+        // Tự động cập nhật trạng thái sản phẩm theo tồn kho toàn bộ chi nhánh
+        int totalStock = inventoryRepository.findAll().stream()
+                .filter(i -> i.getProduct().getProductId().equals(productId))
+                .mapToInt(Inventory::getQuantity)
+                .sum();
+        productRepository.findById(productId).ifPresent(p -> {
+            p.setStatus(totalStock > 0 ? "ACTIVE" : "INACTIVE");
+            productRepository.save(p);
+        });
     }
 
     @Override
