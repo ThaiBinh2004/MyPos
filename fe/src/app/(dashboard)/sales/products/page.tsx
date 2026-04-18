@@ -22,7 +22,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { isManager } from "@/lib/permissions";
 import { useAuth } from "@/contexts/auth-context";
-import { Pencil, Trash2, ToggleLeft, ToggleRight, Plus, Upload, X } from "lucide-react";
+import { Pencil, Trash2, Plus, Upload, X } from "lucide-react";
 
 const STATUS_OPTIONS = [
   { value: "", label: "Tất cả" },
@@ -103,10 +103,6 @@ export default function ProductsPage() {
   const updateMut = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: Partial<ProductForm> }) => updateProduct(id, payload),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["products"] }); setEditProduct(null); setImagePreview(""); resetP(); },
-  });
-  const toggleMut = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: string }) => updateProduct(id, { status }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["products"] }),
   });
   const deleteMut = useMutation({
     mutationFn: deleteProduct,
@@ -242,10 +238,6 @@ export default function ProductsPage() {
                           <TableTd>
                             <div className="flex gap-1.5">
                               <button onClick={() => openEdit(p)} className="p-1.5 rounded hover:bg-indigo-50 text-indigo-500"><Pencil size={13} /></button>
-                              <button onClick={() => toggleMut.mutate({ id: p.productId, status: isActive ? 'INACTIVE' : 'ACTIVE' })}
-                                className={`p-1.5 rounded ${isActive ? 'hover:bg-orange-50 text-orange-400' : 'hover:bg-green-50 text-green-500'}`}>
-                                {isActive ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
-                              </button>
                               <button onClick={() => setDeleteTarget(p)} className="p-1.5 rounded hover:bg-red-50 text-red-400"><Trash2 size={13} /></button>
                             </div>
                           </TableTd>
