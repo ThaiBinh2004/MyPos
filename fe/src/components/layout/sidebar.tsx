@@ -25,7 +25,7 @@ const hrNav = [
 
 const salesNav = [
   { label: 'Bán tại quầy',  href: '/sales/pos',        icon: Store,        roles: [...MANAGER_ROLES, 'employee'] },
-  { label: 'Đơn hàng',      href: '/sales/orders',     icon: ShoppingCart, roles: MANAGER_ROLES },
+  { label: 'Đơn hàng',      href: '/sales/orders',     icon: ShoppingCart, roles: [...MANAGER_ROLES, 'employee'] },
   { label: 'Khách hàng',    href: '/sales/customers',  icon: Users,        roles: MANAGER_ROLES },
   { label: 'Sản phẩm',      href: '/sales/products',   icon: Boxes,        roles: MANAGER_ROLES },
   { label: 'Danh mục',      href: '/sales/categories', icon: Tag,          roles: ['director', 'ADMIN'] },
