@@ -22,7 +22,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { isManager } from "@/lib/permissions";
 import { useAuth } from "@/contexts/auth-context";
-import { Pencil, Trash2, Plus, Upload, X, ToggleLeft, ToggleRight } from "lucide-react";
+import { Pencil, Trash2, Plus, Upload, X } from "lucide-react";
 
 const STATUS_OPTIONS = [
   { value: "", label: "Tất cả" },
@@ -117,10 +117,6 @@ export default function ProductsPage() {
   const updatePromoMut = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: Partial<PromoForm & { active: boolean }> }) => updatePromotion(id, payload),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["promotions"] }); setEditPromo(null); resetPr(); },
-  });
-  const togglePromoMut = useMutation({
-    mutationFn: ({ id, active }: { id: string; active: boolean }) => updatePromotion(id, { active }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["promotions"] }),
   });
   const deletePromoMut = useMutation({
     mutationFn: deletePromotion,
@@ -294,10 +290,6 @@ export default function ProductsPage() {
                         <TableTd>
                           <div className="flex gap-1.5">
                             <button onClick={() => openEditPromo(p)} className="p-1.5 rounded hover:bg-indigo-50 text-indigo-500"><Pencil size={13} /></button>
-                            <button onClick={() => togglePromoMut.mutate({ id: p.promotionId, active: !p.active })}
-                              className={`p-1.5 rounded ${p.active ? 'hover:bg-orange-50 text-orange-400' : 'hover:bg-green-50 text-green-500'}`}>
-                              {p.active ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
-                            </button>
                             <button onClick={() => setDeletePromoTarget(p)} className="p-1.5 rounded hover:bg-red-50 text-red-400"><Trash2 size={13} /></button>
                           </div>
                         </TableTd>

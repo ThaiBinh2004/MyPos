@@ -8,6 +8,7 @@ public record PurchaseOrderResponse(
         String supplierId,
         String supplierName,
         String branchId,
+        String branchName,
         LocalDate date,
         String status,
         String note
@@ -18,6 +19,7 @@ public record PurchaseOrderResponse(
                 p.getSupplier() != null ? p.getSupplier().getSupplierId() : null,
                 p.getSupplier() != null ? p.getSupplier().getSupplierName() : null,
                 p.getBranch() != null ? p.getBranch().getBranchId() : null,
+                p.getBranch() != null ? p.getBranch().getBranchName() : null,
                 p.getOrderDate(),
                 p.getStatus(),
                 p.getNote()

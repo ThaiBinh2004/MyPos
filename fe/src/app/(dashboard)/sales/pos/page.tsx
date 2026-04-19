@@ -2,8 +2,8 @@
 
 import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { getProducts, getCustomers, createCustomer, createOrder } from "@/services/sales.service";
-import type { Product, Customer, CreateOrderPayload } from "@/types";
+import { getProducts, getCustomers, createCustomer, createOrder, getPromotions } from "@/services/sales.service";
+import type { Product, Customer, CreateOrderPayload, Promotion } from "@/types";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { Modal } from "@/components/ui/modal";
 import { formatCurrency } from "@/lib/utils";
 import {
   Search, Plus, Minus, Trash2, UserSearch, UserPlus,
-  Banknote, Receipt, ShoppingCart, CheckCircle, Gift
+  Banknote, Receipt, ShoppingCart, CheckCircle, Gift, Tag
 } from "lucide-react";
 
 interface CartItem {
@@ -40,6 +40,11 @@ export default function PosPage() {
   const [newCustName, setNewCustName] = useState("");
   const [newCustPhone, setNewCustPhone] = useState("");
 
+  // Promo code
+  const [promoCode, setPromoCode] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<Promotion | null>(null);
+  const [promoError, setPromoError] = useState("");
+
   // Payment
   const [paymentMethod, setPaymentMethod] = useState<"CASH" | "TRANSFER">("CASH");
   const [note, setNote] = useState("");
@@ -55,7 +60,9 @@ export default function PosPage() {
     items: CartItem[];
     customer: Customer | null;
     subtotal: number;
-    discount: number;
+    loyaltyDiscount: number;
+    promoDiscount: number;
+    promoCode?: string;
     total: number;
     paymentMethod: string;
     note: string;
@@ -66,6 +73,11 @@ export default function PosPage() {
     queryKey: ["products", search],
     queryFn: () => getProducts({ search, pageSize: 50 }),
     staleTime: 30_000,
+  });
+  const { data: promotions = [] } = useQuery({
+    queryKey: ["promotions"],
+    queryFn: getPromotions,
+    staleTime: 60_000,
   });
   const products = productsData?.data ?? [];
 
@@ -89,7 +101,9 @@ export default function PosPage() {
         items: [...cart],
         customer,
         subtotal,
-        discount,
+        loyaltyDiscount: loyaltyPointsToUse * LOYALTY_RATE,
+        promoDiscount,
+        promoCode: appliedPromo?.code,
         total,
         paymentMethod,
         note,
@@ -99,6 +113,9 @@ export default function PosPage() {
       setLoyaltyPointsToUse(0);
       setPhoneSearch("");
       setNote("");
+      setPromoCode("");
+      setAppliedPromo(null);
+      setPromoError("");
     },
   });
 
@@ -142,10 +159,40 @@ export default function PosPage() {
 
   const cartKey = (i: CartItem) => `${i.product.productId}-${i.selectedSize}-${i.selectedColor}`;
 
+  // Promo helpers
+  const promoIsActive = (p: Promotion) => {
+    const now = Date.now();
+    if (p.startDate && new Date(p.startDate).getTime() > now) return false;
+    if (p.endDate && new Date(p.endDate).getTime() < now) return false;
+    return true;
+  };
+  const calcPromoDiscount = (p: Promotion, sub: number) => {
+    if (sub < p.minOrderAmount) return 0;
+    if (p.discountType === 'PERCENT') {
+      const d = Math.floor(sub * p.discountValue / 100);
+      return p.maxDiscountAmount ? Math.min(d, p.maxDiscountAmount) : d;
+    }
+    return p.discountValue;
+  };
+  const applyPromoCode = () => {
+    const code = promoCode.trim().toUpperCase();
+    if (!code) return;
+    const found = promotions.find(p => p.code?.toUpperCase() === code);
+    if (!found) { setPromoError("Mã không tồn tại"); return; }
+    if (!promoIsActive(found)) { setPromoError("Mã đã hết hạn"); return; }
+    if (subtotal < found.minOrderAmount) {
+      setPromoError(`Đơn tối thiểu ${formatCurrency(found.minOrderAmount)}`);
+      return;
+    }
+    setAppliedPromo(found);
+    setPromoError("");
+  };
+
   // Totals
   const subtotal = cart.reduce((s, i) => s + i.product.price * i.quantity, 0);
   const maxPoints = customer ? Math.min(customer.loyaltyPoints, Math.floor(subtotal / LOYALTY_RATE)) : 0;
-  const discount = loyaltyPointsToUse * LOYALTY_RATE;
+  const promoDiscount = appliedPromo ? calcPromoDiscount(appliedPromo, subtotal) : 0;
+  const discount = loyaltyPointsToUse * LOYALTY_RATE + promoDiscount;
   const total = Math.max(0, subtotal - discount);
 
   const handleSearchCustomer = async () => {
@@ -317,16 +364,54 @@ export default function PosPage() {
           </div>
         )}
 
+        {/* Promo code */}
+        <div className="px-4 py-2 border-t border-gray-100">
+          {appliedPromo ? (
+            <div className="flex items-center justify-between rounded-lg bg-green-50 border border-green-200 px-3 py-1.5">
+              <div className="flex items-center gap-1.5">
+                <Tag size={12} className="text-green-600" />
+                <span className="text-xs font-semibold text-green-700">{appliedPromo.code}</span>
+                <span className="text-xs text-green-600">— Giảm {formatCurrency(promoDiscount)}</span>
+              </div>
+              <button onClick={() => { setAppliedPromo(null); setPromoCode(""); }} className="text-gray-400 hover:text-red-400 text-xs">✕</button>
+            </div>
+          ) : (
+            <div className="flex gap-1.5">
+              <div className="relative flex-1">
+                <Tag size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  className="w-full pl-7 pr-3 py-1.5 rounded-lg border border-gray-200 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-300 uppercase placeholder:normal-case"
+                  placeholder="Nhập mã khuyến mãi..."
+                  value={promoCode}
+                  onChange={e => { setPromoCode(e.target.value); setPromoError(""); }}
+                  onKeyDown={e => e.key === "Enter" && applyPromoCode()}
+                />
+              </div>
+              <button onClick={applyPromoCode}
+                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium">
+                Áp dụng
+              </button>
+            </div>
+          )}
+          {promoError && <p className="text-[10px] text-red-500 mt-0.5">{promoError}</p>}
+        </div>
+
         {/* Totals */}
         <div className="px-4 py-2 border-t border-gray-100 space-y-1 text-sm">
           <div className="flex justify-between text-gray-500">
             <span>Tạm tính</span>
             <span>{formatCurrency(subtotal)}</span>
           </div>
-          {discount > 0 && (
+          {loyaltyPointsToUse > 0 && (
             <div className="flex justify-between text-amber-600">
               <span>Giảm (điểm)</span>
-              <span>- {formatCurrency(discount)}</span>
+              <span>- {formatCurrency(loyaltyPointsToUse * LOYALTY_RATE)}</span>
+            </div>
+          )}
+          {promoDiscount > 0 && (
+            <div className="flex justify-between text-green-600">
+              <span>Giảm (KM {appliedPromo?.code})</span>
+              <span>- {formatCurrency(promoDiscount)}</span>
             </div>
           )}
           <div className="flex justify-between font-bold text-gray-900 text-base border-t pt-1 mt-1">
@@ -475,8 +560,11 @@ export default function PosPage() {
                 </div>
               ))}
               <hr className="border-dashed my-2" />
-              {billOrder.discount > 0 && (
-                <div className="flex justify-between"><span>Giảm giá:</span><span>- {formatCurrency(billOrder.discount)}</span></div>
+              {billOrder.loyaltyDiscount > 0 && (
+                <div className="flex justify-between"><span>Giảm (điểm):</span><span>- {formatCurrency(billOrder.loyaltyDiscount)}</span></div>
+              )}
+              {billOrder.promoDiscount > 0 && (
+                <div className="flex justify-between"><span>Giảm KM ({billOrder.promoCode}):</span><span>- {formatCurrency(billOrder.promoDiscount)}</span></div>
               )}
               <div className="flex justify-between font-bold text-sm">
                 <span>TỔNG CỘNG:</span>

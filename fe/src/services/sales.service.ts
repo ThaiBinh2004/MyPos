@@ -140,6 +140,14 @@ export async function getInventory(
   const { data } = await api.get<PaginatedResponse<Inventory>>('/sales/inventory', {
     params: filters,
   });
+  if (filters?.lowStock) {
+    const filtered = data.data.filter(i => i.quantity <= i.minThreshold);
+    return { ...data, data: filtered, total: filtered.length };
+  }
+  if (!filters?.lowStock && filters?.branchId) {
+    const filtered = data.data.filter(i => i.branchId === filters.branchId);
+    return { ...data, data: filtered, total: filtered.length };
+  }
   return data;
 }
 
@@ -164,6 +172,25 @@ export async function createPurchaseOrder(
   payload: CreatePurchaseOrderPayload
 ): Promise<PurchaseOrder> {
   const { data } = await api.post<PurchaseOrder>('/sales/purchase-orders', payload);
+  return data;
+}
+
+export async function receivePurchaseOrder(id: string): Promise<void> {
+  await api.post(`/sales/purchase-orders/${id}/receive`);
+}
+
+export async function getPurchaseOrderDetails(poId: string): Promise<PurchaseOrderDetail[]> {
+  const { data } = await api.get<PurchaseOrderDetail[]>(`/purchase-order-details/po/${poId}`);
+  return data;
+}
+
+export async function createPurchaseOrderFull(payload: {
+  supplierId: string;
+  branchId: string;
+  note?: string;
+  details: { productId: string; quantityOrdered: number }[];
+}): Promise<PurchaseOrder> {
+  const { data } = await api.post<PurchaseOrder>('/sales/purchase-orders/create', payload);
   return data;
 }
 

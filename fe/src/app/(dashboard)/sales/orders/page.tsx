@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getOrders, updateOrderStatus, createOrder,
-  getProducts, getCustomers, createCustomer,
+  getProducts, getCustomers, createCustomer, getPromotions,
 } from "@/services/sales.service";
-import type { Order, Product, Customer } from "@/types";
+import type { Order, Product, Customer, Promotion } from "@/types";
 import { useAuth } from "@/contexts/auth-context";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableHead, TableBody, TableRow, TableTh, TableTd } from "@/components/ui/table";
@@ -19,7 +19,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import React from "react";
 import {
   ChevronDown, ChevronUp, Truck, CheckCircle, XCircle,
-  Package, Plus, Search, UserSearch, UserPlus, Trash2,
+  Package, Plus, Search, UserSearch, UserPlus, Trash2, Tag,
 } from "lucide-react";
 
 type BackendStatus = 'PENDING' | 'CONFIRMED' | 'SHIPPING' | 'COMPLETED' | 'CANCELLED';
@@ -76,6 +76,9 @@ export default function OrdersPage() {
   const [coPicker, setCoPicker] = useState<Product | null>(null);
   const [coPickedSize, setCoPickedSize] = useState('');
   const [coPickedColor, setCoPickedColor] = useState('');
+  const [coPromoCode, setCoPromoCode] = useState('');
+  const [coAppliedPromo, setCoAppliedPromo] = useState<Promotion | null>(null);
+  const [coPromoError, setCoPromoError] = useState('');
 
   const { data, isLoading } = useQuery({
     queryKey: ['orders', typeFilter, statusFilter],
@@ -89,6 +92,11 @@ export default function OrdersPage() {
     queryKey: ['products-search', coProductSearch],
     queryFn: () => getProducts({ search: coProductSearch || undefined, pageSize: 30 }),
     enabled: showCreate,
+  });
+  const { data: promotions = [] } = useQuery({
+    queryKey: ['promotions'],
+    queryFn: getPromotions,
+    staleTime: 60_000,
   });
   const searchableProducts = productsData?.data ?? [];
 
@@ -121,6 +129,35 @@ export default function OrdersPage() {
     setCoProductSearch(''); setCoShipping(''); setCoShippingFee(0);
     setCoPayment('CASH'); setCoNote(''); setCoShowNewCust(false);
     setCoNewName(''); setCoNewPhone(''); setCoPicker(null);
+    setCoPromoCode(''); setCoAppliedPromo(null); setCoPromoError('');
+  }
+
+  const coPromoIsActive = (p: Promotion) => {
+    const now = Date.now();
+    if (p.startDate && new Date(p.startDate).getTime() > now) return false;
+    if (p.endDate && new Date(p.endDate).getTime() < now) return false;
+    return true;
+  };
+  const calcCoPromoDiscount = (p: Promotion, sub: number) => {
+    if (sub < p.minOrderAmount) return 0;
+    if (p.discountType === 'PERCENT') {
+      const d = Math.floor(sub * p.discountValue / 100);
+      return p.maxDiscountAmount ? Math.min(d, p.maxDiscountAmount) : d;
+    }
+    return p.discountValue;
+  };
+  function applyCoPromo() {
+    const code = coPromoCode.trim().toUpperCase();
+    if (!code) return;
+    const found = promotions.find(p => p.code?.toUpperCase() === code);
+    if (!found) { setCoPromoError('Mã không tồn tại'); return; }
+    if (!coPromoIsActive(found)) { setCoPromoError('Mã đã hết hạn'); return; }
+    if (coSubtotal < found.minOrderAmount) {
+      setCoPromoError(`Đơn tối thiểu ${formatCurrency(found.minOrderAmount)}`);
+      return;
+    }
+    setCoAppliedPromo(found);
+    setCoPromoError('');
   }
 
   async function searchCustomer() {
@@ -168,7 +205,8 @@ export default function OrdersPage() {
   }
 
   const coSubtotal = coLines.reduce((s, l) => s + l.product.price * l.quantity, 0);
-  const coTotal = coSubtotal + coShippingFee;
+  const coPromoDiscount = coAppliedPromo ? calcCoPromoDiscount(coAppliedPromo, coSubtotal) : 0;
+  const coTotal = Math.max(0, coSubtotal - coPromoDiscount) + coShippingFee;
 
   function submitCreate() {
     if (!coLines.length || !user?.employeeId || !user?.branchId) return;
@@ -488,6 +526,36 @@ export default function OrdersPage() {
             )}
           </div>
 
+          {/* Promo code */}
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1.5 block">Mã khuyến mãi</label>
+            {coAppliedPromo ? (
+              <div className="flex items-center justify-between rounded-lg bg-green-50 border border-green-200 px-3 py-2">
+                <div className="flex items-center gap-1.5">
+                  <Tag size={13} className="text-green-600" />
+                  <span className="text-sm font-semibold text-green-700">{coAppliedPromo.code}</span>
+                  <span className="text-xs text-green-600">— {coAppliedPromo.name} · Giảm {formatCurrency(coPromoDiscount)}</span>
+                </div>
+                <button onClick={() => { setCoAppliedPromo(null); setCoPromoCode(''); }} className="text-gray-400 hover:text-red-400 text-xs">✕</button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Tag size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    className="w-full pl-8 pr-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 uppercase placeholder:normal-case"
+                    placeholder="Nhập mã khuyến mãi..."
+                    value={coPromoCode}
+                    onChange={e => { setCoPromoCode(e.target.value); setCoPromoError(''); }}
+                    onKeyDown={e => e.key === 'Enter' && applyCoPromo()}
+                  />
+                </div>
+                <Button size="sm" onClick={applyCoPromo}>Áp dụng</Button>
+              </div>
+            )}
+            {coPromoError && <p className="text-xs text-red-500 mt-1">{coPromoError}</p>}
+          </div>
+
           {/* Shipping */}
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-2">
@@ -523,6 +591,12 @@ export default function OrdersPage() {
               <div className="flex justify-between text-gray-500">
                 <span>Tạm tính</span><span>{formatCurrency(coSubtotal)}</span>
               </div>
+              {coPromoDiscount > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span>Giảm KM ({coAppliedPromo?.code})</span>
+                  <span>- {formatCurrency(coPromoDiscount)}</span>
+                </div>
+              )}
               {coShippingFee > 0 && (
                 <div className="flex justify-between text-gray-500">
                   <span>Phí ship</span><span>{formatCurrency(coShippingFee)}</span>

@@ -71,6 +71,7 @@ export interface Inventory {
   productId: string;
   productName: string;
   branchId: string;
+  branchName?: string;
   quantity: number;
   minThreshold: number;
   updatedAt: string;
@@ -100,6 +101,7 @@ export interface PurchaseOrder {
   supplierId: string;
   supplierName: string;
   branchId: string;
+  branchName?: string;
   date: string;
   status: PurchaseOrderStatus;
   note?: string;
